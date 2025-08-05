@@ -1,0 +1,4 @@
+250805 19:36:30 mysqld_safe Logging to '/data/data/com.termux/files/usr/var/lib/mysql/localhost.err'.
+250805 19:36:31 mysqld_safe Starting mariadbd daemon with databases from /data/data/com.termux/files/usr/var/lib/mysql
+250805 19:47:09 mysqld_safe Logging to '/data/data/com.termux/files/usr/var/lib/mysql/localhost.err'.
+250805 19:47:10 mysqld_safe A mysqld process already exists
