@@ -1,0 +1,88 @@
+model User {
+  id           String        @id @default(cuid())
+  name         String?
+  handle       String?
+  image        String?
+  isAdmin      Boolean       @default(false)
+  bio          String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  // Relations
+  comments     Comment[]
+  favorites    Favorite[]
+  chatMessages ChatMessage[]
+}
+
+model Game {
+  id                 String      @id @default(cuid())
+  title              String
+  description        String
+  imageUrl           String
+  developer          String      @default("Unknown")
+  version            String      @default("v1.0")
+  engine             String      @default("REN'PY")
+  language           String      @default("English")
+  rating             Float       @default(4)
+  tags               String      @default("Adult,Visual Novel")
+  downloadUrl        String?
+  downloadUrlWindows String?
+  downloadUrlAndroid String?
+  downloadUrlLinux   String?
+  downloadUrlMac     String?
+  censored           Boolean     @default(false)
+  installation       String      @default("Extract and run")
+  changelog          String      @default("Initial release")
+  devNotes           String?
+  releaseDate        DateTime    @default(now())
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  // OS Support
+  osWindows          Boolean     @default(true)
+  osAndroid          Boolean     @default(false)
+  osLinux            Boolean     @default(false)
+  osMac              Boolean     @default(false)
+  // Relations
+  images             GameImage[]
+  comments           Comment[]
+  favorites          Favorite[]
+}
+
+model GameImage {
+  id       String @id @default(cuid())
+  gameId   String
+  imageUrl String
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  likes     Int      @default(0)
+  gameId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Favorite {
+  id     String @id @default(cuid())
+  gameId String
+  userId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  content   String
+  imageUrl  String?
+  isGuest   Boolean  @default(false)
+  guestName String?
+  userId    String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
