@@ -357,135 +357,205 @@ function renderHeader($title = '', $description = '', $keywords = '') {
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <meta name='description' content='{$pageDescription}'>
     <title>{$pageTitle}</title>
-    <link rel='stylesheet' href='style.css?v=" . time() . "'>
-    <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='theme.css?v=" . time() . "'>
+    <link rel='preconnect' href='https://fonts.googleapis.com'>
+    <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap' rel='stylesheet'>
     <link rel='icon' type='image/svg+xml' href='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><text y=\".9em\" font-size=\"90\">🎮</text></svg>'>
 </head>
 <body>
-<nav class='navbar'>
-    <div class='nav-container'>
-        <a href='index.php' class='nav-brand'>
-            <i class='fas fa-gamepad'></i> 
-            <span>" . SITE_NAME . "</span>
-        </a>
-        
-        <button class='menu-toggle' id='menuToggle' aria-label='Menu'>
-            <i class='fas fa-bars'></i>
-        </button>
-        
-        <div class='nav-menu' id='navMenu'>
-            <a href='index.php' class='" . ($currentPage === 'index.php' ? 'active' : '') . "'>
-                <i class='fas fa-home'></i> <span>Início</span>
-            </a>";
+<nav class='nav'>
+    <div class='container'>
+        <div class='nav-container'>
+            <a href='index.php' class='nav-brand'>
+                <svg class='w-6 h-6' style='width: 1.5rem; height: 1.5rem; margin-right: 0.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <circle cx='12' cy='12' r='10'></circle>
+                    <polygon points='10,8 16,12 10,16 10,8'></polygon>
+                </svg>
+                " . SITE_NAME . "
+            </a>
+            
+            <div class='nav-menu'>";
     
     if (isLoggedIn()) {
         $user = $_SESSION['user'];
-        $roleColors = [
-            'DEV' => '#f85149',
-            'SUPER_ADMIN' => '#ff8c00', 
-            'ADMIN' => '#58a6ff',
-            'USER' => '#8b949e'
-        ];
-        $roleColor = $roleColors[$user['role']] ?? '#8b949e';
         
-        echo "<div class='user-info-nav'>
-                <span class='user-badge' style='color: {$roleColor}; font-weight: 600;'>
-                    <i class='fas fa-user-circle'></i> 
-                    {$user['username']} 
-                    <span class='role role-{$user['role']}'>{$user['role']}</span>
-                </span>
+        echo "<div class='flex items-center gap-2 text-sm text-muted-foreground'>
+                <svg style='width: 1.25rem; height: 1.25rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path>
+                    <circle cx='12' cy='7' r='4'></circle>
+                </svg>
+                <span>Olá, {$user['username']}</span>
               </div>";
         
+        echo "<a href='index.php' class='btn btn-ghost'>
+                <svg style='width: 1rem; height: 1rem; margin-right: 0.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <path d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'></path>
+                    <polyline points='9,22 9,12 15,12 15,22'></polyline>
+                </svg>
+                Jogos
+              </a>";
+        
         if ($user['role'] !== 'USER') {
-            echo "<a href='dashboard.php' class='" . ($currentPage === 'dashboard.php' ? 'active' : '') . "'>
-                    <i class='fas fa-tachometer-alt'></i> <span>Painel</span>
+            echo "<a href='dashboard.php' class='btn btn-ghost'>
+                    <svg style='width: 1rem; height: 1rem; margin-right: 0.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                        <path d='M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z'></path>
+                        <circle cx='12' cy='12' r='3'></circle>
+                    </svg>
+                    Admin
                   </a>";
         }
         
-        echo "<a href='profile.php' class='" . ($currentPage === 'profile.php' ? 'active' : '') . "'>
-                <i class='fas fa-user-cog'></i> <span>Perfil</span>
-              </a>
-              <a href='auth.php?action=logout' onclick='return confirm(\"Deseja realmente sair?\")'>
-                <i class='fas fa-sign-out-alt'></i> <span>Sair</span>
+        echo "<button onclick='toggleTheme()' class='btn btn-ghost' title='Alternar tema'>
+                <svg style='width: 1rem; height: 1rem;' id='theme-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <path d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'></path>
+                </svg>
+              </button>";
+        
+        echo "<a href='auth.php?action=logout' onclick='return confirm(\"Deseja realmente sair?\")' class='btn btn-outline'>
+                <svg style='width: 1rem; height: 1rem; margin-right: 0.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'></path>
+                    <polyline points='16,17 21,12 16,7'></polyline>
+                    <line x1='21' y1='12' x2='9' y2='12'></line>
+                </svg>
+                Sair
               </a>";
     } else {
-        echo "<a href='auth.php' class='" . ($currentPage === 'auth.php' ? 'active' : '') . "'>
-                <i class='fas fa-sign-in-alt'></i> <span>Entrar</span>
+        echo "<a href='index.php' class='btn btn-ghost'>
+                <svg style='width: 1rem; height: 1rem; margin-right: 0.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <path d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'></path>
+                    <polyline points='9,22 9,12 15,12 15,22'></polyline>
+                </svg>
+                Jogos
+              </a>";
+              
+        echo "<button onclick='toggleTheme()' class='btn btn-ghost' title='Alternar tema'>
+                <svg style='width: 1rem; height: 1rem;' id='theme-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <path d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'></path>
+                </svg>
+              </button>";
+              
+        echo "<a href='auth.php' class='btn btn-outline'>
+                <svg style='width: 1rem; height: 1rem; margin-right: 0.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <path d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'></path>
+                    <polyline points='10,17 15,12 10,7'></polyline>
+                    <line x1='15' y1='12' x2='3' y2='12'></line>
+                </svg>
+                Entrar
               </a>";
     }
     
-    echo "<button onclick='toggleTheme()' class='theme-toggle' title='Alternar tema'>
-            <i class='fas fa-moon'></i> <span>Tema</span>
-          </button>
+    echo "        </div>
         </div>
     </div>
 </nav>
-<main class='main-content'>";
+
+<script>
+function toggleTheme() {
+    const html = document.documentElement;
+    const icon = document.getElementById('theme-icon');
+    
+    if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        if (icon) {
+            icon.innerHTML = '<path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"></path>';
+        }
+    } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        if (icon) {
+            icon.innerHTML = '<circle cx=\"12\" cy=\"12\" r=\"5\"></circle><path d=\"M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42\"></path>';
+        }
+    }
+}
+
+// Aplicar tema salvo
+if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+    const icon = document.getElementById('theme-icon');
+    if (icon) {
+        icon.innerHTML = '<circle cx=\"12\" cy=\"12\" r=\"5\"></circle><path d=\"M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42\"></path>';
+    }
+}
+</script>";
 }
 
 
 // ====== FOOTER MELHORADO ======
 function renderFooter() {
     $currentYear = date('Y');
-    echo "</main>
-<footer class='footer'>
+    echo "
+<footer class='py-8 mt-8 border-t border-border bg-muted/30'>
     <div class='container'>
-        <div class='footer-content'>
-            <div class='footer-section'>
-                <h4><i class='fas fa-gamepad'></i> " . SITE_NAME . "</h4>
-                <p>A melhor plataforma para jogos Ren'Py.</p>
-                
+        <div class='grid grid-cols-1 md:grid-cols-3 gap-8'>
+            <div>
+                <div class='flex items-center gap-2 mb-4'>
+                    <svg style='width: 1.5rem; height: 1.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                        <circle cx='12' cy='12' r='10'></circle>
+                        <polygon points='10,8 16,12 10,16 10,8'></polygon>
+                    </svg>
+                    <h4 class='font-bold'>" . SITE_NAME . "</h4>
+                </div>
+                <p class='text-muted-foreground text-sm'>A melhor plataforma para jogos Ren'Py.</p>
             </div>
-            <div class='footer-section'>
-                <h4><i class='fas fa-info-circle'></i> Sobre</h4>
-                <ul class='footer-links'>
-                    
-                    
-                    <li><a href='#'>Contato</a></li>
-                </ul>
-            </div>
-            <div class='footer-section'>
-                <h4><i class='fas fa-shield-alt'></i> Legal</h4>
-                <ul class='footer-links'>
-                    <li><a href='#'>Termos de Uso</a></li>
-                    <li><a href='#'>Política de Privacidade</a></li>
-                    <li><a href='#'>Sobre</a></li>
-                    
+            
+            <div>
+                <h4 class='font-semibold mb-4'>
+                    <svg style='width: 1rem; height: 1rem; display: inline; margin-right: 0.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                        <circle cx='12' cy='12' r='3'></circle>
+                        <circle cx='12' cy='1' r='1'></circle>
+                        <circle cx='12' cy='23' r='1'></circle>
+                        <circle cx='20' cy='12' r='1'></circle>
+                        <circle cx='4' cy='12' r='1'></circle>
+                        <circle cx='18.36' cy='5.64' r='1'></circle>
+                        <circle cx='18.36' cy='18.36' r='1'></circle>
+                        <circle cx='5.64' cy='5.64' r='1'></circle>
+                        <circle cx='5.64' cy='18.36' r='1'></circle>
+                    </svg>
+                    Sobre
+                </h4>
+                <ul class='space-y-2 text-sm text-muted-foreground'>
+                    <li><a href='#' class='hover:text-foreground transition-colors'>Contato</a></li>
                 </ul>
             </div>
             
+            <div>
+                <h4 class='font-semibold mb-4'>
+                    <svg style='width: 1rem; height: 1rem; display: inline; margin-right: 0.5rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                        <rect x='3' y='11' width='18' height='11' rx='2' ry='2'></rect>
+                        <circle cx='12' cy='16' r='1'></circle>
+                        <path d='m7 11V7a5 5 0 0 1 10 0v4'></path>
+                    </svg>
+                    Legal
+                </h4>
+                <ul class='space-y-2 text-sm text-muted-foreground'>
+                    <li><a href='#' class='hover:text-foreground transition-colors'>Termos de Uso</a></li>
+                    <li><a href='#' class='hover:text-foreground transition-colors'>Política de Privacidade</a></li>
+                    <li><a href='#' class='hover:text-foreground transition-colors'>Sobre</a></li>
+                </ul>
             </div>
         </div>
-        <div class='footer-bottom'>
-            <p>&copy; {$currentYear} " . SITE_NAME . ". Desenvolvido com <i class='fas fa-heart' style='color: #e74c3c;'></i> para a comunidade.</p>
-            <p class='footer-disclaimer'>
-                <i class='fas fa-exclamation-triangle'></i> 
+        
+        <div class='mt-8 pt-8 border-t border-border text-center space-y-2'>
+            <p class='text-sm text-muted-foreground'>
+                &copy; {$currentYear} " . SITE_NAME . ". Desenvolvido com 
+                <svg style='width: 1rem; height: 1rem; display: inline; color: #e74c3c;' viewBox='0 0 24 24' fill='currentColor'>
+                    <path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'></path>
+                </svg>
+                para a comunidade.
+            </p>
+            <p class='text-xs text-muted-foreground'>
+                <svg style='width: 1rem; height: 1rem; display: inline; margin-right: 0.25rem;' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+                    <path d='M12 9v4l3 3'></path>
+                    <circle cx='12' cy='12' r='10'></circle>
+                </svg>
                 Conteúdo adulto. Proibido para menores de 18 anos.
             </p>
         </div>
     </div>
 </footer>
 
-<!-- Modal para screenshots -->
-<div id='imageModal' class='modal' onclick='closeModal()' role='dialog' aria-labelledby='modalTitle' aria-hidden='true'>
-    <button class='close' onclick='closeModal()' aria-label='Fechar modal'>&times;</button>
-    <img class='modal-content' id='modalImage' alt=''>
-    <div id='caption' class='modal-caption'></div>
-    <div class='modal-controls'>
-        <button onclick='previousImage()' aria-label='Imagem anterior'><i class='fas fa-chevron-left'></i></button>
-        <button onclick='nextImage()' aria-label='Próxima imagem'><i class='fas fa-chevron-right'></i></button>
-    </div>
-</div>
-
-<!-- Loading overlay -->
-<div id='loadingOverlay' class='loading-overlay' style='display: none;'>
-    <div class='loading-spinner'>
-        <i class='fas fa-spinner fa-spin'></i>
-        <p>Carregando...</p>
-    </div>
-</div>
-
-<script src='script.js?v=" . time() . "'></script>
 </body>
 </html>";
 }
