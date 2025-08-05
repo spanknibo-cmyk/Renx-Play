@@ -14,6 +14,7 @@ function canModerateComments(int $postOwnerId): bool {
 $gameSlug = $_GET['game'] ?? null;
 
 if ($gameSlug) {
+    // PÁGINA DO JOGO INDIVIDUAL
     $stmt = $pdo->prepare("
         SELECT g.*, u.username AS author
           FROM games g
@@ -90,585 +91,454 @@ if ($gameSlug) {
     $totalComments = $cTotal->fetchColumn();
 
     renderHeader($game['title']);
-
-    // BARRA DE PESQUISA INLINE
     ?>
-    <section class="search-section">
-    <div class="container">
-        <div class="search-wrapper">
-            <input type="text" id="searchInput" placeholder="Pesquisar jogos...">
-            <i class="fas fa-search search-icon"></i>
-            <div id="searchResults" class="search-results"></div>
-        </div>
-    </div>
-</section>
-    <?php
-
-    $shots = json_decode($game['screenshots'] ?: '[]', true);
-    $links = json_decode($game['download_links'] ?: '[]', true);
-
-    echo "<div class='container main-content'>
-    <section class='game-header'>
-        <figure class='cover-box'>
-            <img src='uploads/covers/{$game['cover_image']}' class='game-cover' alt='Capa {$game['title']}'>
-        </figure>
-        <header class='game-info'>
-            <h1>{$game['title']}</h1>
-            <ul class='game-meta'>
-                <li><i class='fas fa-user'></i> {$game['author']}</li>
-                <li><i class='fas fa-calendar'></i> ".date('d/m/Y',strtotime($game['created_at']))."</li>
-                <li><i class='fas fa-download'></i> {$game['downloads_count']}</li>
-                <li><i class='fas fa-tag'></i> {$game['category']}</li>
-            </ul>
-        </header>
-    </section>";
-
-    if ($shots) {
-        echo "<section class='screenshots'><h2><i class='fas fa-images'></i> Screenshots</h2><div class='screenshot-gallery'>";
-        foreach ($shots as $i => $s)
-            echo "<img src='uploads/screenshots/{$s}' data-full='uploads/screenshots/{$s}' class='screenshot' alt='Screenshot' onclick='openModal(this, {$i})'>";
-        echo "</div></section>";
-    }
-
-    echo "<section class='game-description'>
-        <h2><i class='fas fa-info-circle'></i> Descrição</h2>
-        <p>".nl2br(htmlspecialchars($game['description']))."</p>
-    </section>
-
-    <section class='game-specs'>
-        <div class='spec-grid'>
-            <div><strong>Idiomas:</strong> {$game['languages']}</div>
-            <div><strong>Plataformas:</strong> {$game['platforms']}</div>
-            <div><strong>Versão:</strong> {$game['version']}</div>
-            <div><strong>Tradutor:</strong> {$game['translator']}</div>
-        </div>
-    </section>";
-
-    if (isLoggedIn() && $links) {
-        echo "<section class='download-section'>
-            <h2><i class='fas fa-download'></i> Downloads</h2>
-            <div class='download-buttons'>";
-        foreach ($links as $l)
-            echo "<a class='btn btn-download' href='{$l}' target='_blank' onclick='fetch(\"?download={$gameId}\")'><i class='fas fa-download'></i> Download</a>";
-        echo "</div></section>";
-    } elseif (!isLoggedIn()) {
-        echo "<p class='login-required'><i class='fas fa-lock'></i><a href='auth.php'>Faça login</a> para baixar</p>";
-    }
-
-    echo "<section class='comments-section' id='comments'>
-            <h2><i class='fas fa-comments'></i> Comentários ({$totalComments})</h2>";
-
-    if (isLoggedIn()) {
-        echo "<form class='comment-form' method='POST' id='commentForm'>
-                <input type='hidden' name='action' value='comment'>
-                <input type='hidden' name='game_id' value='{$gameId}'>
-                <input type='hidden' name='parent_id' id='parentId' value=''>
-                <div id='replyingToIndicator' style='display:none;' class='replying-indicator'>
-                    Respondendo: <span id='replyingToUser'></span>
-                </div>
-                <textarea name='comment' placeholder='Escreva algo...' required></textarea>
-                <div class='comment-form-actions'>
-                    <button class='btn btn-primary'><i class='fas fa-paper-plane'></i> Enviar</button>
-                    <button type='button' class='btn btn-secondary' id='cancelReply' style='display:none'>Cancelar</button>
-                </div>
-              </form>";
-    }
-
-    $stmt = $pdo->prepare("
-        SELECT c.*, u.username
-          FROM comments c
-          JOIN users u ON u.id = c.user_id
-         WHERE c.game_id=? AND c.deleted_at IS NULL
-         ORDER BY c.created_at ASC
-    ");
-    $stmt->execute([$gameId]);
-    $comments = $stmt->fetchAll();
-
-    $tree = [];
-    foreach ($comments as $c) {
-        if ($c['parent_id']) {
-            $tree[$c['parent_id']]['children'][] = $c;
-        } else {
-            $tree[$c['id']] = $c;
-            $tree[$c['id']]['children'] = [];
-        }
-    }
-
-    $commentUsers = [];
-    foreach ($comments as $c) {
-        $commentUsers[$c['id']] = $c;
-    }
-
-    function renderComments($nodes, $postOwner, $allUsers = [], $level = 0) {
-        foreach ($nodes as $c) {
-            $ownerCls = ($c['user_id'] === $postOwner) ? 'comment-author-owner' : '';
-            echo "<article class='comment {$ownerCls}' data-id='{$c['id']}' data-level='{$level}'>
-                    <header>
-                        <span class='comment-author'>{$c['username']}</span>";
-
-            $dt = new DateTime($c['created_at'], new DateTimeZone('UTC'));
-            $dt->setTimezone(new DateTimeZone('America/Sao_Paulo'));
-            echo "<time>" . $dt->format('d/m/Y H:i') . "</time>";
-
-            echo ($c['edited_at'] ? " <em>(editado)</em>" : '') . "
-                   </header>";
-
-            if ($level === 1 && !empty($c['parent_id']) && isset($allUsers[$c['parent_id']])) {
-                $replyTo = htmlspecialchars($allUsers[$c['parent_id']]['username']);
-                echo "<div class='replying-to'>Respondendo: <span class='reply-user'>@{$replyTo}</span></div>";
-            }
-
-            echo "<p>" . nl2br(htmlspecialchars($c['comment'])) . "</p>
-                   <div class='comment-actions'>";
-
-            if (isLoggedIn()) {
-                echo "<button class='reply-link' data-parent='{$c['id']}' data-username='{$c['username']}'><i class='fas fa-reply'></i> Responder</button>";
-                if ($_SESSION['user']['id'] === $c['user_id']) {
-                    echo "<button class='edit-link' data-id='{$c['id']}' data-text='" . htmlspecialchars($c['comment'], ENT_QUOTES) . "'>
-                            <i class='fas fa-edit'></i> Editar</button>";
-                }
-                if ($_SESSION['user']['id'] === $c['user_id'] || canModerateComments($postOwner)) {
-                    echo "<form method='POST' style='display:inline'>
-                            <input type='hidden' name='action' value='delete_comment'>
-                            <input type='hidden' name='comment_id' value='{$c['id']}'>
-                            <input type='hidden' name='game_id' value='{$c['game_id']}'>
-                            <button class='delete-link' onclick='return confirm(\"Apagar comentário?\")'>
-                                <i class='fas fa-trash'></i> Excluir
+    
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?= htmlspecialchars($game['title']) ?> - <?= SITE_NAME ?></title>
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    </head>
+    <body>
+        <!-- Header moderno -->
+        <header class="header">
+            <div class="header-content">
+                <a href="index.php" class="logo">
+                    <i class="fas fa-play" style="margin-right: 0.5rem;"></i>
+                    Renx-Play
+                </a>
+                
+                <nav class="nav">
+                    <a href="index.php" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        Games
+                    </a>
+                    
+                    <?php if (hasRole(['ADMIN', 'SUPER_ADMIN', 'DEV'])): ?>
+                        <a href="dashboard.php" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            Admin
+                        </a>
+                    <?php endif; ?>
+                    
+                    <?php if (isLoggedIn()): ?>
+                        <div class="user-dropdown">
+                            <button class="nav-link" onclick="toggleDropdown()">
+                                <i class="fas fa-user"></i>
+                                <i class="fas fa-chevron-down"></i>
                             </button>
-                          </form>";
-                }
-            }
-            echo "</div>";
-
-            if (!empty($c['children'])) {
-                $totalChildren = count($c['children']);
-                echo "<div class='comment-children'>";
-                foreach ($c['children'] as $i => $child) {
-                    $style = $i < 5 ? '' : 'style="display:none;"';
-                    echo "<div class='child-comment' {$style}>";
-                    renderComments([$child], $postOwner, $allUsers, $level + 1);
-                    echo "</div>";
-                }
-                echo "</div>";
-
-                if ($totalChildren > 5) {
-                    echo "<button class='show-more-btn' data-parent-id='{$c['id']}' data-shown='5' data-total='{$totalChildren}'>
-                            Ver mais respostas ({$totalChildren} total)
-                          </button>";
-                }
-            }
-            echo "</article>";
-        }
-    }
-
-    echo "<div class='comments-list'>";
-    renderComments($tree, $game['posted_by'], $commentUsers);
-    echo "</div></section></div>";
-
-    renderFooter();
-} else {
-    // Página inicial - listagem de jogos
-    renderHeader();
-
-    // BARRA DE PESQUISA INLINE - PÁGINA INICIAL
-    ?>
-    <section class="search-section">
-    <div class="container">
-        <div class="search-wrapper">
-            <input type="text" id="searchInput" placeholder="Pesquisar jogos...">
-            <i class="fas fa-search search-icon"></i>
-            <div id="searchResults" class="search-results"></div>
-        </div>
-    </div>
-</section>
-    <?php
-
-    $page   = max(1, (int)($_GET['p'] ?? 1));
-    $offset = ($page - 1) * POSTS_PER_PAGE;
-
-    $sql = "SELECT * FROM games ORDER BY created_at DESC LIMIT ? OFFSET ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(1, POSTS_PER_PAGE, PDO::PARAM_INT);
-    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
-    $stmt->execute();
-    $games = $stmt->fetchAll();
-
-    $total = $pdo->query("SELECT COUNT(*) FROM games")->fetchColumn();
-    $pages = ceil($total / POSTS_PER_PAGE);
-
-    echo "<section class='hero-section'>
-            <div class='container'>
-                <h1><i class='fas fa-gamepad'></i> Jogos Traduzidos</h1>
-                <p>Descubra os melhores jogos Ren'Py em português</p>
+                            <div class="dropdown-content" id="userDropdown">
+                                <a href="profile.php" class="dropdown-item">
+                                    <i class="fas fa-user-cog"></i>
+                                    Perfil
+                                </a>
+                                <a href="auth.php?action=logout" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Sair
+                                </a>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <a href="auth.php" class="nav-link">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Entrar
+                        </a>
+                    <?php endif; ?>
+                </nav>
             </div>
-          </section>
+        </header>
 
-          <div class='container'>
-            <div class='games-grid'>";
+        <!-- Botão voltar -->
+        <div class="container" style="padding-top: 1rem;">
+            <a href="index.php" class="btn btn-outline btn-sm">
+                <i class="fas fa-arrow-left"></i>
+                Voltar para a lista
+            </a>
+        </div>
 
-    foreach ($games as $g) {
-        echo "<article class='game-card'>
-                <a href='?game={$g['slug']}' class='game-link'>
-                    <img src='uploads/covers/{$g['cover_image']}' class='game-card-image' alt='" . htmlspecialchars($g['title'], ENT_QUOTES) . "'>
-                    <div class='game-card-content'>
-                        <h3 class='game-title'>" . htmlspecialchars($g['title']) . "</h3>
-                        <p class='game-excerpt'>" . substr(htmlspecialchars($g['description']), 0, 100) . "...</p>
-                        <div class='game-stats'>
-                            <span><i class='fas fa-download'></i> {$g['downloads_count']}</span>
-                            <span><i class='fas fa-calendar'></i> " . date('d/m/Y', strtotime($g['created_at'])) . "</span>
+        <!-- Detalhes do jogo -->
+        <div class="game-detail">
+            <div class="game-header">
+                <div class="game-image">
+                    <img src="uploads/covers/<?= htmlspecialchars($game['cover_image']) ?>" alt="<?= htmlspecialchars($game['title']) ?>">
+                </div>
+                
+                <div class="game-info">
+                    <h1><?= htmlspecialchars($game['title']) ?></h1>
+                    
+                    <div class="game-badges">
+                        <span class="badge">REN'PY</span>
+                        <span class="badge">v1.0</span>
+                        <span class="badge"><?= htmlspecialchars($game['author']) ?></span>
+                    </div>
+                    
+                    <div class="card-rating" style="margin-bottom: 1rem;">
+                        <i class="fas fa-star"></i>
+                        <span>4.5</span>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <p><strong>Idioma:</strong> <?= htmlspecialchars($game['language'] ?? 'English') ?></p>
+                        <p><strong>Censurado:</strong> <?= $game['censored'] ? 'Sim' : 'Não' ?></p>
+                        <p><strong>Lançamento:</strong> <?= date('d/m/Y', strtotime($game['created_at'])) ?></p>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <p><strong>Plataformas:</strong></p>
+                        <div class="game-badges">
+                            <?php if ($game['os_windows'] ?? true): ?>
+                                <span class="badge">Windows</span>
+                            <?php endif; ?>
+                            <?php if ($game['os_android'] ?? true): ?>
+                                <span class="badge">Android</span>
+                            <?php endif; ?>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <?php if (isLoggedIn()): ?>
+                <div class="download-section">
+                    <h3><i class="fas fa-download"></i> Selecionar Plataforma:</h3>
+                    <div class="download-buttons">
+                        <?php if ($game['download_url_windows']): ?>
+                            <a href="<?= htmlspecialchars($game['download_url_windows']) ?>" target="_blank" class="btn btn-primary">
+                                <i class="fab fa-windows"></i>
+                                Windows
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php if ($game['download_url_android']): ?>
+                            <a href="<?= htmlspecialchars($game['download_url_android']) ?>" target="_blank" class="btn btn-primary">
+                                <i class="fab fa-android"></i>
+                                Android
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php if ($game['download_url']): ?>
+                            <a href="<?= htmlspecialchars($game['download_url']) ?>" target="_blank" class="btn btn-secondary">
+                                <i class="fas fa-download"></i>
+                                Download Geral
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="download-section">
+                    <p style="text-align: center; color: hsl(var(--muted-foreground));">
+                        <i class="fas fa-lock"></i>
+                        <a href="auth.php" style="color: hsl(var(--primary));">Faça login</a> para fazer download
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <!-- Descrição -->
+            <div class="card" style="margin-bottom: 1rem;">
+                <div class="card-content">
+                    <h3 style="margin-bottom: 0.75rem;">
+                        <i class="fas fa-info-circle"></i>
+                        Descrição
+                    </h3>
+                    <p><?= nl2br(htmlspecialchars($game['description'])) ?></p>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <?php if (!empty($game['tags'])): ?>
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div class="card-content">
+                        <h3 style="margin-bottom: 0.75rem;">
+                            <i class="fas fa-tags"></i>
+                            Tags
+                        </h3>
+                        <div class="card-tags">
+                            <?php 
+                            $tags = explode(',', $game['tags']);
+                            foreach ($tags as $tag): 
+                                $tag = trim($tag);
+                                if ($tag):
+                            ?>
+                                <span class="tag"><?= htmlspecialchars($tag) ?></span>
+                            <?php 
+                                endif;
+                            endforeach; 
+                            ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <script>
+            function toggleDropdown() {
+                const dropdown = document.getElementById('userDropdown');
+                dropdown.classList.toggle('show');
+            }
+
+            // Fechar dropdown ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.user-dropdown')) {
+                    document.getElementById('userDropdown').classList.remove('show');
+                }
+            });
+        </script>
+    </body>
+    </html>
+
+    <?php
+} else {
+    // PÁGINA INICIAL - LISTAGEM DE JOGOS
+    ?>
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?= SITE_NAME ?> - Jogos Traduzidos</title>
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <link rel="icon" href="https://i.imgur.com/QyZKduC.png" type="image/png">
+    </head>
+    <body>
+        <!-- Header moderno -->
+        <header class="header">
+            <div class="header-content">
+                <a href="index.php" class="logo">
+                    Renxplay Teste
                 </a>
-              </article>";
-    }
-    echo "  </div>";
+                
+                <nav class="nav">
+                    <a href="index.php" class="nav-link active">
+                        <i class="fas fa-home"></i>
+                        Jogos
+                    </a>
+                    
+                    <?php if (isLoggedIn() && hasRole(['ADMIN', 'SUPER_ADMIN', 'DEV'])): ?>
+                        <a href="dashboard.php" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            Admin
+                        </a>
+                    <?php endif; ?>
+                    
+                    <?php if (isLoggedIn()): ?>
+                        <div class="user-dropdown">
+                            <button class="nav-link" onclick="toggleDropdown()">
+                                <i class="fas fa-user"></i>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-content" id="userDropdown">
+                                <a href="profile.php" class="dropdown-item">
+                                    <i class="fas fa-user-cog"></i>
+                                    Perfil
+                                </a>
+                                <a href="auth.php?action=logout" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Sair
+                                </a>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <a href="auth.php" class="btn btn-outline btn-sm">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Entrar
+                        </a>
+                    <?php endif; ?>
+                </nav>
+            </div>
+        </header>
 
-    if ($pages > 1) {
-        echo "<nav class='pagination'>";
-        if ($page > 1)
-            echo "<a href='?p=" . ($page - 1) . "' class='btn btn-secondary'><i class='fas fa-chevron-left'></i> Anterior</a>";
+        <!-- Seção de busca -->
+        <section class="search-section">
+            <div class="container">
+                <div class="search-wrapper">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar jogos...">
+                    <i class="fas fa-search search-icon"></i>
+                    <div id="searchResults" class="search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); margin-top: 0.25rem; box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1); z-index: 1000;"></div>
+                </div>
+            </div>
+        </section>
 
-        for ($i = max(1, $page - 2); $i <= min($pages, $page + 2); $i++) {
-            $cls = $i === $page ? 'active' : '';
-            echo "<a href='?p={$i}' class='btn btn-secondary {$cls}'>{$i}</a>";
-        }
+        <!-- Área principal com logo central -->
+        <div style="text-align: center; padding: 2rem 0; background: hsl(var(--background));">
+            <div style="width: 150px; height: 150px; margin: 0 auto 1rem; background: hsl(var(--muted)); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                <div style="width: 120px; height: 120px; border: 4px solid hsl(var(--border)); border-radius: 50%; background: hsl(var(--background)); display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-play" style="font-size: 3rem; color: hsl(var(--primary)); margin-left: 0.5rem;"></i>
+                </div>
+                <!-- Ícone de busca sobreposto -->
+                <div style="position: absolute; top: -15px; right: -15px; width: 60px; height: 60px; background: hsl(var(--muted)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 4px solid hsl(var(--background));">
+                    <i class="fas fa-search" style="font-size: 1.25rem; color: hsl(var(--muted-foreground));"></i>
+                </div>
+            </div>
+            
+            <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Jogos Traduzidos</h1>
+            <p style="color: hsl(var(--muted-foreground)); font-size: 0.875rem;">Descubra os melhores jogos Ren'Py em português</p>
+        </div>
 
-        if ($page < $pages)
-            echo "<a href='?p=" . ($page + 1) . "' class='btn btn-secondary'>Próxima <i class='fas fa-chevron-right'></i></a>";
+        <!-- Grid de jogos -->
+        <div class="container">
+            <?php
+            $page = max(1, (int)($_GET['p'] ?? 1));
+            $offset = ($page - 1) * POSTS_PER_PAGE;
 
-        echo "</nav>";
-    }
+            $sql = "SELECT * FROM games ORDER BY created_at DESC LIMIT ? OFFSET ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(1, POSTS_PER_PAGE, PDO::PARAM_INT);
+            $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            $games = $stmt->fetchAll();
 
-    echo "</div>";
-    renderFooter();
+            $total = $pdo->query("SELECT COUNT(*) FROM games")->fetchColumn();
+            $pages = ceil($total / POSTS_PER_PAGE);
+
+            if (empty($games)): ?>
+                <div style="text-align: center; padding: 3rem; color: hsl(var(--muted-foreground));">
+                    <p>Nenhum jogo encontrado.</p>
+                </div>
+            <?php else: ?>
+                <div class="games-grid">
+                    <?php foreach ($games as $g): ?>
+                        <a href="?game=<?= urlencode($g['slug']) ?>" style="text-decoration: none; color: inherit;">
+                            <div class="card">
+                                <div class="card-image">
+                                    <img src="uploads/covers/<?= htmlspecialchars($g['cover_image']) ?>" 
+                                         alt="<?= htmlspecialchars($g['title']) ?>" 
+                                         loading="lazy">
+                                </div>
+                                
+                                <div class="card-content">
+                                    <h3 class="card-title"><?= htmlspecialchars($g['title']) ?></h3>
+                                    
+                                    <div class="card-meta">
+                                        <span class="badge">REN'PY</span>
+                                        <span>v1.0</span>
+                                        
+                                        <div class="card-rating">
+                                            <i class="fas fa-star"></i>
+                                            <span>4.5</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <p class="card-description">
+                                        <?= htmlspecialchars(substr($g['description'], 0, 100)) ?>...
+                                    </p>
+                                    
+                                    <?php if (!empty($g['tags'])): ?>
+                                        <div class="card-tags">
+                                            <?php 
+                                            $tags = array_slice(explode(',', $g['tags']), 0, 3);
+                                            foreach ($tags as $tag): 
+                                                $tag = trim($tag);
+                                                if ($tag):
+                                            ?>
+                                                <span class="tag"><?= htmlspecialchars($tag) ?></span>
+                                            <?php 
+                                                endif;
+                                            endforeach; 
+                                            ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <div class="card-footer">
+                                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                                            <i class="fas fa-calendar"></i>
+                                            <span><?= date('d/m/Y', strtotime($g['created_at'])) ?></span>
+                                        </div>
+                                        
+                                        <div class="btn btn-sm btn-outline">
+                                            <i class="fas fa-download"></i>
+                                            Download
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- Paginação -->
+            <?php if ($pages > 1): ?>
+                <div class="pagination">
+                    <?php if ($page > 1): ?>
+                        <a href="?p=<?= $page - 1 ?>">Previous</a>
+                    <?php endif; ?>
+                    
+                    <span class="current">1</span>
+                    
+                    <?php if ($pages > 1): ?>
+                        <a href="?p=2">2</a>
+                    <?php endif; ?>
+                    
+                    <?php if ($page < $pages): ?>
+                        <a href="?p=<?= $page + 1 ?>">Next</a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <script>
+            function toggleDropdown() {
+                const dropdown = document.getElementById('userDropdown');
+                dropdown.classList.toggle('show');
+            }
+
+            // Fechar dropdown ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.user-dropdown')) {
+                    const dropdown = document.getElementById('userDropdown');
+                    if (dropdown) dropdown.classList.remove('show');
+                }
+            });
+
+            // Busca
+            document.addEventListener('DOMContentLoaded', function() {
+                const input = document.getElementById('searchInput');
+                const results = document.getElementById('searchResults');
+                
+                if (!input || !results) return;
+                
+                input.addEventListener('input', function() {
+                    const query = this.value.trim();
+                    
+                    if (query.length < 2) {
+                        results.style.display = 'none';
+                        return;
+                    }
+                    
+                    fetch('search_games.php?q=' + encodeURIComponent(query))
+                        .then(response => response.json())
+                        .then(games => {
+                            if (games.length === 0) {
+                                results.innerHTML = '<div style="padding: 1rem; color: hsl(var(--muted-foreground));">Nenhum jogo encontrado</div>';
+                            } else {
+                                results.innerHTML = games.map(game => 
+                                    `<a href="?game=${game.slug}" style="display: block; padding: 0.75rem 1rem; text-decoration: none; color: hsl(var(--foreground)); border-bottom: 1px solid hsl(var(--border)); transition: background 0.2s;" onmouseover="this.style.background='hsl(var(--accent))'" onmouseout="this.style.background='transparent'">
+                                        <strong>${game.title}</strong><br>
+                                        <small style="color: hsl(var(--muted-foreground));">${game.category || 'Visual Novel'} • ${game.downloads_count || 0} downloads</small>
+                                    </a>`
+                                ).join('');
+                            }
+                            results.style.display = 'block';
+                        })
+                        .catch(() => {
+                            results.innerHTML = '<div style="padding: 1rem; color: hsl(var(--muted-foreground));">Erro na busca</div>';
+                            results.style.display = 'block';
+                        });
+                });
+                
+                // Esconder ao clicar fora
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.search-wrapper')) {
+                        results.style.display = 'none';
+                    }
+                });
+            });
+        </script>
+    </body>
+    </html>
+    <?php
 }
 ?>
-
-<script>
-// BUSCA AUTOCOMPLETE - SIMPLES E GARANTIDA
-document.addEventListener('DOMContentLoaded', function() {
-    const input = document.getElementById('searchInput');
-    const results = document.getElementById('searchResults');
-    
-    if (!input || !results) return;
-    
-    input.addEventListener('input', function() {
-        const query = this.value.trim();
-        
-        if (query.length < 2) {
-            results.style.display = 'none';
-            return;
-        }
-        
-        // Faz a busca
-        fetch('search_games.php?q=' + encodeURIComponent(query))
-            .then(response => response.json())
-            .then(games => {
-                if (games.length === 0) {
-                    results.innerHTML = '<div style="padding:15px;color:#666;">Nenhum jogo encontrado</div>';
-                } else {
-                    results.innerHTML = games.map(game => 
-                        `<a href="?game=${game.slug}" style="display:block;padding:10px 15px;text-decoration:none;color:#333;border-bottom:1px solid #eee;">
-                            <strong>${game.title}</strong><br>
-                            <small style="color:#666;">${game.category} • ${game.downloads_count} downloads</small>
-                        </a>`
-                    ).join('');
-                }
-                results.style.display = 'block';
-            })
-            .catch(() => {
-                results.innerHTML = '<div style="padding:15px;color:#666;">Erro na busca</div>';
-                results.style.display = 'block';
-            });
-    });
-    
-    // Esconder ao clicar fora
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('#searchInput') && !e.target.closest('#searchResults')) {
-            results.style.display = 'none';
-        }
-    });
-});
-
-// Resto do JavaScript original
-function openModal(img, idx=0) {
-    const modal    = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImage');
-    modalImg.src   = img.dataset.full || img.src;
-    modal.dataset.index = idx;
-    modal.style.display = 'flex';
-}
-function closeModal() {
-    document.getElementById('imageModal').style.display = 'none';
-}
-function nextImage() { navigateImage(1); }
-function previousImage() { navigateImage(-1); }
-function navigateImage(step) {
-    const modal = document.getElementById('imageModal');
-    const gallery = document.querySelectorAll('.screenshot-gallery img');
-    let idx = parseInt(modal.dataset.index,10) + step;
-    if (idx < 0) idx = gallery.length-1;
-    if (idx >= gallery.length) idx = 0;
-    gallery[idx].click();
-}
-
-document.addEventListener('click', e => {
-    if (e.target.matches('.reply-link')) {
-        const parentId = e.target.dataset.parent;
-        const username = e.target.dataset.username;
-        
-        document.getElementById('parentId').value = parentId;
-        document.getElementById('cancelReply').style.display = 'inline-block';
-        
-        const indicator = document.getElementById('replyingToIndicator');
-        const userSpan = document.getElementById('replyingToUser');
-        userSpan.textContent = '@' + username;
-        indicator.style.display = 'block';
-        
-        document.getElementById('commentForm').scrollIntoView({behavior: 'smooth'});
-    }
-    
-    if (e.target.matches('#cancelReply')) {
-        document.getElementById('parentId').value = '';
-        document.getElementById('replyingToIndicator').style.display = 'none';
-        e.target.style.display = 'none';
-        
-        const form = document.getElementById('commentForm');
-        form.action.value = 'comment';
-        if (form.comment_id) {
-            form.removeChild(form.comment_id);
-        }
-        form.comment.value = '';
-    }
-    
-    if (e.target.matches('.edit-link')) {
-        const id = e.target.dataset.id;
-        const text = e.target.dataset.text;
-        const form = document.getElementById('commentForm');
-        
-        document.getElementById('replyingToIndicator').style.display = 'none';
-        document.getElementById('parentId').value = '';
-        
-        form.comment.value = text;
-        form.action.value = 'edit_comment';
-
-        if (!form.comment_id) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'comment_id';
-            input.value = id;
-            form.appendChild(input);
-        } else {
-            form.comment_id.value = id;
-        }
-
-        document.getElementById('cancelReply').style.display = 'inline-block';
-        form.scrollIntoView({behavior: 'smooth'});
-    }
-    
-    if (e.target.classList.contains('show-more-btn')) {
-        const btn = e.target;
-        const parentId = btn.getAttribute('data-parent-id');
-        const total = parseInt(btn.getAttribute('data-total'));
-        let shown = parseInt(btn.getAttribute('data-shown'));
-
-        const parentDiv = btn.previousElementSibling;
-
-        let count = 0;
-        const children = parentDiv.querySelectorAll('.child-comment[style*="display: none"]');
-        for (let i = 0; i < children.length && count < 5; i++, count++) {
-            children[i].style.display = '';
-        }
-
-        shown += count;
-        btn.setAttribute('data-shown', shown);
-
-        if (shown >= total) {
-            btn.remove();
-        }
-    }
-});
-</script>
-
-<style>
-.comment { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; border-radius: 6px; }
-.comment-author-owner { background: #fff8dc; border-color: #ffd700; color: #333333; }
-.comment-children { margin-left: 2em; border-left: 2px solid #ccc; padding-left: 1em; }
-.child-comment { margin-top: 0.5em; }
-.comment-actions { margin-top: 0.5em; }
-.comment-actions button, .comment-actions .delete-link {
-    background: none; border: none; color: #007BFF; cursor: pointer; margin-right: 0.5em;
-}
-.comment-actions button:hover, .comment-actions .delete-link:hover { text-decoration: underline; }
-
-.replying-to {
-    font-size: 0.9em;
-    color: #666;
-    margin-bottom: 0.5em;
-    padding: 0.25em 0.5em;
-    background: #f8f9fa;
-    border-left: 3px solid #007bff;
-    border-radius: 3px;
-}
-.reply-user {
-    font-weight: bold;
-    color: #007bff;
-}
-
-.replying-indicator {
-    font-size: 0.9em;
-    color: #666;
-    margin-bottom: 0.5em;
-    padding: 0.5em;
-    background: #e3f2fd;
-    border-left: 3px solid #2196f3;
-    border-radius: 3px;
-}
-
-.show-more-btn {
-    background: none;
-    border: none;
-    color: #007bff;
-    cursor: pointer;
-    font-size: 0.9em;
-    margin-top: 0.5em;
-}
-.show-more-btn:hover {
-    text-decoration: underline;
-}
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-       background:rgba(0,0,0,.9); align-items:center; justify-content:center; z-index:9999; }
-.modal img { max-width:90%; max-height:90%; border:4px solid #fff; border-radius:8px; }
-.modal-controls { position:absolute; top:50%; width:100%; display:flex; justify-content:space-between; }
-.modal-controls button { background:none; border:none; font-size:2rem; color:#fff; cursor:pointer; }
-.inline-form { display:inline; }
-
-
-/* ====== SEARCH BAR (usa variáveis do tema) ====== */
-.search-section {
-    background: var(--bg-tertiary);
-    padding: 2rem 0;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.search-wrapper {
-    position: relative;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.search-wrapper input {
-    width: 100%;
-    padding: 0.75rem 3rem 0.75rem 1rem;
-    font-size: 1rem;
-    border: 2px solid var(--border);
-    border-radius: 25px;
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-    transition: all 0.3s ease;
-    font-family: inherit;
-}
-
-.search-wrapper input::placeholder {
-    color: var(--text-secondary);
-}
-
-.search-wrapper input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
-    outline: none;
-    transform: translateY(-1px);
-}
-
-.search-icon {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    pointer-events: none;
-    transition: color 0.3s ease;
-}
-
-.search-wrapper input:focus + .search-icon {
-    color: var(--accent);
-}
-
-.search-results {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-radius: 0 0 12px 12px;
-    box-shadow: var(--shadow);
-    max-height: 350px;
-    overflow-y: auto;
-    z-index: 100;
-}
-
-.search-results a {
-    display: block;
-    padding: 0.75rem 1rem;
-    text-decoration: none;
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border);
-    transition: background-color 0.2s ease;
-}
-
-.search-results a:last-child {
-    border-bottom: none;
-}
-
-.search-results a:hover {
-    background: var(--bg-tertiary);
-}
-
-.search-results strong {
-    color: var(--accent);
-}
-
-.search-results small {
-    color: var(--text-secondary);
-}
-
-.search-results div {
-    padding: 1rem;
-    text-align: center;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-/* Responsivo */
-@media (max-width: 576px) {
-    .search-section {
-        padding: 1.5rem 0;
-    }
-    
-    .search-wrapper input {
-        font-size: 0.9rem;
-        padding: 0.65rem 2.5rem 0.65rem 0.85rem;
-    }
-    
-    .search-icon {
-        right: 0.75rem;
-        font-size: 1rem;
-    }
-}
-
-
-</style>
-
-<div id='imageModal' class='modal' onclick='closeModal()' role='dialog' aria-hidden='true'>
-    <button class='close' onclick='closeModal()' aria-label='Fechar' style='position:absolute;top:15px;right:25px;font-size:2.5rem'>&times;</button>
-    <img class='modal-content' id='modalImage' alt='Imagem da screenshot'>
-    <div class='modal-controls'>
-        <button onclick='previousImage()' aria-label='Imagem anterior'>&lt;</button>
-        <button onclick='nextImage()' aria-label='Próxima imagem'>&gt;</button>
-    </div>
-</div>
