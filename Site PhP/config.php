@@ -343,7 +343,7 @@ function validateURL($url) {
 // ====== HEADER MELHORADO ======
 function renderHeader($title = '', $description = '', $keywords = '') {
     $pageTitle = $title ? $title . ' - ' . SITE_NAME : SITE_NAME . ' - Jogos Adultos';
-    $pageDescription = $description ?: 'Renxplay - A melhor plataforma de jogos adultos';
+    $pageDescription = $description ?: 'Renx-Play - A melhor plataforma de jogos adultos';
     $currentPage = basename($_SERVER['PHP_SELF']);
     
     echo "<!DOCTYPE html>
@@ -357,66 +357,67 @@ function renderHeader($title = '', $description = '', $keywords = '') {
     <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css' rel='stylesheet'>
     <link rel='icon' type='image/svg+xml' href='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><text y=\".9em\" font-size=\"90\">🎮</text></svg>'>
 </head>
-<body>
-<nav class='navbar'>
-    <div class='nav-container'>
-        <a href='index.php' class='nav-brand'>
-            <i class='fas fa-gamepad'></i> 
-            <span>" . SITE_NAME . "</span>
-        </a>
-        
-        <button class='menu-toggle' id='menuToggle' aria-label='Menu'>
-            <i class='fas fa-bars'></i>
-        </button>
-        
-        <div class='nav-menu' id='navMenu'>
-            <a href='index.php' class='" . ($currentPage === 'index.php' ? 'active' : '') . "'>
-                <i class='fas fa-home'></i> <span>Início</span>
-            </a>";
+<body class='min-h-screen bg-background text-foreground'>
+    <!-- Navigation - Replicando exatamente o App.tsx -->
+    <nav class='bg-background border-b sticky top-0 z-50'>
+        <div class='container mx-auto px-4'>
+            <div class='flex items-center justify-between h-16'>
+                <!-- Logo -->
+                <a href='index.php' class='text-xl font-bold'>
+                    Renx-Play
+                </a>
+                
+                <!-- Navigation Items -->
+                <div class='flex items-center gap-4'>";
     
-    if (isLoggedIn()) {
-        $user = $_SESSION['user'];
-        $roleColors = [
-            'DEV' => '#f85149',
-            'SUPER_ADMIN' => '#ff8c00', 
-            'ADMIN' => '#58a6ff',
-            'USER' => '#8b949e'
-        ];
-        $roleColor = $roleColors[$user['role']] ?? '#8b949e';
-        
-        echo "<div class='user-info-nav'>
-                <span class='user-badge' style='color: {$roleColor}; font-weight: 600;'>
-                    <i class='fas fa-user-circle'></i> 
-                    {$user['username']} 
-                    <span class='role role-{$user['role']}'>{$user['role']}</span>
-                </span>
-              </div>";
-        
-        if ($user['role'] !== 'USER') {
-            echo "<a href='dashboard.php' class='" . ($currentPage === 'dashboard.php' ? 'active' : '') . "'>
-                    <i class='fas fa-tachometer-alt'></i> <span>Painel</span>
-                  </a>";
-        }
-        
-        echo "<a href='profile.php' class='" . ($currentPage === 'profile.php' ? 'active' : '') . "'>
-                <i class='fas fa-user-cog'></i> <span>Perfil</span>
-              </a>
-              <a href='auth.php?action=logout' onclick='return confirm(\"Deseja realmente sair?\")'>
-                <i class='fas fa-sign-out-alt'></i> <span>Sair</span>
-              </a>";
-    } else {
-        echo "<a href='auth.php' class='" . ($currentPage === 'auth.php' ? 'active' : '') . "'>
-                <i class='fas fa-sign-in-alt'></i> <span>Entrar</span>
+    // Games link
+    echo "<a href='index.php'>
+            <button class='btn-ghost'>
+                <i class='fas fa-home h-4 w-4 mr-2'></i>
+                Games
+            </button>
+          </a>";
+    
+    // Admin link (se for admin)
+    if (isLoggedIn() && hasRole(['ADMIN', 'SUPER_ADMIN', 'DEV'])) {
+        echo "<a href='dashboard.php'>
+                <button class='btn-ghost'>
+                    <i class='fas fa-cog h-4 w-4 mr-2'></i>
+                    Admin
+                </button>
               </a>";
     }
     
-    echo "<button onclick='toggleTheme()' class='theme-toggle' title='Alternar tema'>
-            <i class='fas fa-moon'></i> <span>Tema</span>
-          </button>
+    // User Dropdown Menu - Replicando exatamente App.tsx
+    echo "<div class='dropdown-menu-wrapper'>
+            <button class='btn-ghost btn-icon dropdown-trigger' onclick='toggleUserDropdown()' aria-expanded='false'>
+                <i class='fas fa-user h-4 w-4'></i>
+                <i class='fas fa-chevron-down h-3 w-3 ml-1'></i>
+            </button>
+            <div class='dropdown-content' id='userDropdownMenu'>
+                <div class='dropdown-item' onclick='toggleTheme()'>
+                    <i class='theme-icon fas fa-moon h-4 w-4 mr-2'></i>
+                    <span class='theme-text'>Tema Escuro</span>
+                </div>
+            </div>
+          </div>";
+    
+    if (!isLoggedIn()) {
+        // Login button
+        echo "<a href='auth.php'>
+                <button class='btn-outline'>
+                    Login
+                </button>
+              </a>";
+    }
+    
+    echo "        </div>
+            </div>
         </div>
-    </div>
-</nav>
-<main class='main-content'>";
+    </nav>
+    
+    <!-- Main Content Container -->
+    <main class='container mx-auto px-4 py-8'>";
 }
 
 
@@ -424,40 +425,90 @@ function renderHeader($title = '', $description = '', $keywords = '') {
 function renderFooter() {
     $currentYear = date('Y');
     echo "</main>
-<footer class='footer'>
+
+<!-- Footer -->
+<footer class='border-t mt-12 py-8 glass-effect'>
     <div class='container'>
-        <div class='footer-content'>
-            <div class='footer-section'>
-                <h4><i class='fas fa-gamepad'></i> " . SITE_NAME . "</h4>
-                <p>A melhor plataforma para jogos Ren'Py.</p>
-                
+        <div class='grid grid-cols-1 md:grid-cols-3 gap-8 mb-8'>
+            <div>
+                <h4 class='font-bold mb-4 gradient-text'>
+                    <i class='fas fa-gamepad mr-2'></i>
+                    " . SITE_NAME . "
+                </h4>
+                <p class='text-muted-foreground text-sm leading-relaxed'>
+                    A melhor plataforma para descobrir e jogar os melhores jogos Ren'Py. 
+                    Conteúdo de qualidade, sempre atualizado.
+                </p>
+                <div class='mt-4 flex gap-3'>
+                    <a href='#' class='text-muted-foreground hover:text-primary transition-colors tooltip' data-tooltip='Discord'>
+                        <i class='fab fa-discord text-lg'></i>
+                    </a>
+                    <a href='#' class='text-muted-foreground hover:text-primary transition-colors tooltip' data-tooltip='Twitter'>
+                        <i class='fab fa-twitter text-lg'></i>
+                    </a>
+                    <a href='#' class='text-muted-foreground hover:text-primary transition-colors tooltip' data-tooltip='GitHub'>
+                        <i class='fab fa-github text-lg'></i>
+                    </a>
+                </div>
             </div>
-            <div class='footer-section'>
-                <h4><i class='fas fa-info-circle'></i> Sobre</h4>
-                <ul class='footer-links'>
-                    
-                    
-                    <li><a href='#'>Contato</a></li>
-                </ul>
-            </div>
-            <div class='footer-section'>
-                <h4><i class='fas fa-shield-alt'></i> Legal</h4>
-                <ul class='footer-links'>
-                    <li><a href='#'>Termos de Uso</a></li>
-                    <li><a href='#'>Política de Privacidade</a></li>
-                    <li><a href='#'>Sobre</a></li>
-                    
+            
+            <div>
+                <h4 class='font-bold mb-4'>
+                    <i class='fas fa-info-circle mr-2'></i>
+                    Links Úteis
+                </h4>
+                <ul class='space-y-2 text-sm'>
+                    <li><a href='#' class='text-muted-foreground hover:text-foreground transition-colors ripple-effect'>Sobre Nós</a></li>
+                    <li><a href='#' class='text-muted-foreground hover:text-foreground transition-colors ripple-effect'>Contato</a></li>
+                    <li><a href='#' class='text-muted-foreground hover:text-foreground transition-colors ripple-effect'>FAQ</a></li>
+                    <li><a href='#' class='text-muted-foreground hover:text-foreground transition-colors ripple-effect'>Desenvolvedores</a></li>
                 </ul>
             </div>
             
+            <div>
+                <h4 class='font-bold mb-4'>
+                    <i class='fas fa-shield-alt mr-2'></i>
+                    Legal & Suporte
+                </h4>
+                <ul class='space-y-2 text-sm'>
+                    <li><a href='#' class='text-muted-foreground hover:text-foreground transition-colors ripple-effect'>Termos de Uso</a></li>
+                    <li><a href='#' class='text-muted-foreground hover:text-foreground transition-colors ripple-effect'>Política de Privacidade</a></li>
+                    <li><a href='#' class='text-muted-foreground hover:text-foreground transition-colors ripple-effect'>DMCA</a></li>
+                    <li><a href='#' class='text-muted-foreground hover:text-foreground transition-colors ripple-effect'>Reportar Bug</a></li>
+                </ul>
             </div>
         </div>
-        <div class='footer-bottom'>
-            <p>&copy; {$currentYear} " . SITE_NAME . ". Desenvolvido com <i class='fas fa-heart' style='color: #e74c3c;'></i> para a comunidade.</p>
-            <p class='footer-disclaimer'>
-                <i class='fas fa-exclamation-triangle'></i> 
-                Conteúdo adulto. Proibido para menores de 18 anos.
+        
+        <div class='border-t pt-6 text-center'>
+            <div class='mb-4'>
+                <div class='inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-full'>
+                    <div class='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+                    <span class='text-sm text-muted-foreground'>Sistema Online</span>
+                </div>
+            </div>
+            
+            <p class='text-sm text-muted-foreground mb-2'>
+                &copy; {$currentYear} " . SITE_NAME . ". Desenvolvido com 
+                <i class='fas fa-heart text-red-500 mx-1 pulse-effect'></i> 
+                para a comunidade gaming.
             </p>
+            
+            <div class='flex justify-center items-center gap-4 text-xs text-muted-foreground'>
+                <span>
+                    <i class='fas fa-exclamation-triangle mr-1'></i>
+                    Conteúdo adulto. +18 anos.
+                </span>
+                <span>|</span>
+                <span>
+                    <i class='fas fa-server mr-1'></i>
+                    Versão 2.0.0
+                </span>
+                <span>|</span>
+                <span>
+                    <i class='fas fa-clock mr-1'></i>
+                    Atualizado hoje
+                </span>
+            </div>
         </div>
     </div>
 </footer>
