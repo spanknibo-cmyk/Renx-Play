@@ -231,11 +231,10 @@ body {
 }
 
 .card-image {
-    position: relative;
-    width: 100%;
-    height: 160px;
+    aspect-ratio: 16/9;
     overflow: hidden;
     background: hsl(var(--muted));
+    position: relative;
 }
 
 .card-image img {
@@ -814,4 +813,110 @@ body {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* Profile page styles */
+.profile-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1);
+}
+
+.profile-header {
+    margin-bottom: 1.5rem;
+}
+
+.profile-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.site-info {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.site-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.site-info p {
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 1.5rem;
+}
+
+.site-links {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.site-links h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.site-links ul {
+    list-style: none;
+    padding: 0;
+}
+
+.site-links li {
+    margin-bottom: 0.5rem;
+}
+
+.site-links a {
+    color: hsl(var(--muted-foreground));
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+}
+
+.site-links a:hover {
+    color: hsl(var(--foreground));
+}
+
+.site-footer {
+    border-top: 1px solid hsl(var(--border));
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+.site-footer p {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.5rem;
+}
+
+.disclaimer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+}
+
+.user-info {
+    color: hsl(var(--primary)) !important;
+    font-weight: 600;
 }

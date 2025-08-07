@@ -103,54 +103,6 @@ if ($gameSlug) {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     </head>
     <body>
-        <!-- Header moderno -->
-        <header class="header">
-            <div class="header-content">
-                <a href="index.php" class="logo">
-                    <i class="fas fa-play" style="margin-right: 0.5rem;"></i>
-                    Renx-Play
-                </a>
-                
-                <nav class="nav">
-                    <a href="index.php" class="nav-link">
-                        <i class="fas fa-home"></i>
-                        Games
-                    </a>
-                    
-                    <?php if (hasRole(['ADMIN', 'SUPER_ADMIN', 'DEV'])): ?>
-                        <a href="dashboard.php" class="nav-link">
-                            <i class="fas fa-cog"></i>
-                            Admin
-                        </a>
-                    <?php endif; ?>
-                    
-                    <?php if (isLoggedIn()): ?>
-                        <div class="user-dropdown">
-                            <button class="nav-link" onclick="toggleDropdown()">
-                                <i class="fas fa-user"></i>
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="dropdown-content" id="userDropdown">
-                                <a href="profile.php" class="dropdown-item">
-                                    <i class="fas fa-user-cog"></i>
-                                    Perfil
-                                </a>
-                                <a href="auth.php?action=logout" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    Sair
-                                </a>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <a href="auth.php" class="nav-link">
-                            <i class="fas fa-sign-in-alt"></i>
-                            Entrar
-                        </a>
-                    <?php endif; ?>
-                </nav>
-            </div>
-        </header>
-
         <!-- Botão voltar -->
         <div class="container" style="padding-top: 1rem;">
             <a href="index.php" class="btn btn-outline btn-sm">
@@ -297,7 +249,7 @@ if ($gameSlug) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?= SITE_NAME ?> - Jogos Traduzidos</title>
+        <title><?= SITE_NAME ?></title>
         <link rel="stylesheet" href="style.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <link rel="icon" href="https://i.imgur.com/QyZKduC.png" type="image/png">
@@ -361,21 +313,7 @@ if ($gameSlug) {
             </div>
         </section>
 
-        <!-- Área principal com logo central -->
-        <div style="text-align: center; padding: 2rem 0; background: hsl(var(--background));">
-            <div style="width: 150px; height: 150px; margin: 0 auto 1rem; background: hsl(var(--muted)); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                <div style="width: 120px; height: 120px; border: 4px solid hsl(var(--border)); border-radius: 50%; background: hsl(var(--background)); display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-play" style="font-size: 3rem; color: hsl(var(--primary)); margin-left: 0.5rem;"></i>
-                </div>
-                <!-- Ícone de busca sobreposto -->
-                <div style="position: absolute; top: -15px; right: -15px; width: 60px; height: 60px; background: hsl(var(--muted)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 4px solid hsl(var(--background));">
-                    <i class="fas fa-search" style="font-size: 1.25rem; color: hsl(var(--muted-foreground));"></i>
-                </div>
-            </div>
-            
-            <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Jogos Traduzidos</h1>
-            <p style="color: hsl(var(--muted-foreground)); font-size: 0.875rem;">Descubra os melhores jogos Ren'Py em português</p>
-        </div>
+
 
         <!-- Grid de jogos -->
         <div class="container">
