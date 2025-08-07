@@ -5,7 +5,8 @@
     box-sizing: border-box;
 }
 
-:root {
+:root,
+.light {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -243,6 +244,45 @@ body {
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
+}
+
+/* Mobile: Show full image without cropping */
+@media (max-width: 768px) {
+    .card-image {
+        height: auto;
+        aspect-ratio: 16/9;
+        min-height: 160px;
+    }
+    
+    .card-image img {
+        object-fit: contain;
+        background: hsl(var(--muted));
+    }
+}
+
+/* Theme toggle button in dropdown */
+.theme-toggle-dropdown {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.theme-toggle-dropdown:hover {
+    background: hsl(var(--accent));
+}
+
+/* Theme toggle button hover effects */
+.theme-toggle:hover {
+    background: hsl(var(--accent)) !important;
 }
 
 .card:hover .card-image img {
