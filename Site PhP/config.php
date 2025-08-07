@@ -384,35 +384,36 @@ function renderHeader($title = '', $description = '', $keywords = '') {
         ];
         $roleColor = $roleColors[$user['role']] ?? '#8b949e';
         
-        echo "<div class='user-info-nav'>
-                <span class='user-badge' style='color: {$roleColor}; font-weight: 600;'>
-                    <i class='fas fa-user-circle'></i> 
-                    {$user['username']} 
-                    <span class='role role-{$user['role']}'>{$user['role']}</span>
-                </span>
-              </div>";
-        
         if ($user['role'] !== 'USER') {
             echo "<a href='dashboard.php' class='" . ($currentPage === 'dashboard.php' ? 'active' : '') . "'>
                     <i class='fas fa-tachometer-alt'></i> <span>Painel</span>
                   </a>";
         }
         
-        echo "<a href='profile.php' class='" . ($currentPage === 'profile.php' ? 'active' : '') . "'>
-                <i class='fas fa-user-cog'></i> <span>Perfil</span>
-              </a>
-              <a href='auth.php?action=logout' onclick='return confirm(\"Deseja realmente sair?\")'>
-                <i class='fas fa-sign-out-alt'></i> <span>Sair</span>
-              </a>";
+        echo "<div class='user-dropdown'>
+                <button class='user-dropdown-toggle' onclick='toggleUserDropdown()' aria-expanded='false'>
+                    <i class='fas fa-user-circle'></i>
+                    <span>{$user['username']}</span>
+                    <i class='fas fa-chevron-down'></i>
+                </button>
+                <div class='user-dropdown-menu' id='userDropdownMenu'>
+                    <a href='profile.php' class='dropdown-item'>
+                        <i class='fas fa-user-cog'></i> <span>Perfil</span>
+                    </a>
+                    <button onclick='toggleTheme()' class='dropdown-item theme-toggle-btn'>
+                        <i class='fas fa-moon theme-icon'></i> <span>Tema</span>
+                    </button>
+                    <a href='auth.php?action=logout' class='dropdown-item' onclick='return confirm(\"Deseja realmente sair?\")'>
+                        <i class='fas fa-sign-out-alt'></i> <span>Sair</span>
+                    </a>
+                </div>
+              </div>";
     } else {
         echo "<a href='auth.php' class='" . ($currentPage === 'auth.php' ? 'active' : '') . "'>
                 <i class='fas fa-sign-in-alt'></i> <span>Entrar</span>
               </a>";
     }
     
-    echo "<button onclick='toggleTheme()' class='theme-toggle' title='Alternar tema'>
-            <i class='fas fa-moon'></i> <span>Tema</span>
-          </button>
         </div>
     </div>
 </nav>

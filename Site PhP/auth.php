@@ -170,6 +170,7 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <script src="script.js?v=<?= time() ?>"></script>
     <script>
         // Auto focus no primeiro input
         document.addEventListener('DOMContentLoaded', function() {

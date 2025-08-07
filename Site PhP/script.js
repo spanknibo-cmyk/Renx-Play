@@ -117,22 +117,74 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ====== USER DROPDOWN ======
+function toggleUserDropdown() {
+    // Find all dropdowns and toggles
+    const dropdowns = document.querySelectorAll('.user-dropdown-menu');
+    const toggles = document.querySelectorAll('.user-dropdown-toggle');
+    
+    // Close all dropdowns first
+    dropdowns.forEach(dropdown => {
+        dropdown.classList.remove('show');
+    });
+    toggles.forEach(toggle => {
+        toggle.setAttribute('aria-expanded', 'false');
+    });
+    
+    // Find the clicked toggle and its dropdown
+    const clickedToggle = event.target.closest('.user-dropdown-toggle');
+    if (!clickedToggle) return;
+    
+    const dropdown = clickedToggle.nextElementSibling;
+    if (!dropdown) return;
+    
+    // Toggle the clicked dropdown
+    dropdown.classList.add('show');
+    clickedToggle.setAttribute('aria-expanded', 'true');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.user-dropdown')) {
+        const dropdowns = document.querySelectorAll('.user-dropdown-menu');
+        const toggles = document.querySelectorAll('.user-dropdown-toggle');
+        
+        dropdowns.forEach(dropdown => {
+            dropdown.classList.remove('show');
+        });
+        toggles.forEach(toggle => {
+            toggle.setAttribute('aria-expanded', 'false');
+        });
+    }
+});
+
 // ====== THEME TOGGLE ======
 function applyTheme(theme) {
-    const root = document.documentElement;          // <html>
-    root.classList.toggle('light-mode', theme === 'light');
-    root.classList.toggle('dark-mode',  theme === 'dark');
+    const root = document.documentElement;
+    
+    // Remove existing theme classes
+    root.classList.remove('light-mode', 'dark-mode', 'light', 'dark');
+    
+    // Add new theme class
+    if (theme === 'light') {
+        root.classList.add('light-mode');
+        root.classList.remove('dark');
+    } else {
+        root.classList.add('dark-mode', 'dark');
+    }
+    
     localStorage.setItem('theme', theme);
 
-    // Ícone
-    const icon = document.querySelector('.theme-toggle i');
-    if (icon) {
-        icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
-    }
+    // Update all theme icons
+    const icons = document.querySelectorAll('.theme-icon');
+    icons.forEach(icon => {
+        icon.className = theme === 'light' ? 'fas fa-sun theme-icon' : 'fas fa-moon theme-icon';
+    });
 }
 
 function toggleTheme() {
-    const newTheme = document.documentElement.classList.contains('light-mode') ? 'dark' : 'light';
+    const root = document.documentElement;
+    const newTheme = (root.classList.contains('light-mode') || root.classList.contains('light')) ? 'dark' : 'light';
     applyTheme(newTheme);
 }
 

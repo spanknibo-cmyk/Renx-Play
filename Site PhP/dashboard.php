@@ -148,18 +148,20 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 </a>
                 
                 <div class="user-dropdown">
-                    <button class="nav-link" onclick="toggleDropdown()">
-                        <i class="fas fa-user"></i>
+                    <button class="user-dropdown-toggle" onclick="toggleUserDropdown()" aria-expanded="false">
+                        <i class="fas fa-user-circle"></i>
+                        <span><?= $_SESSION['user']['username'] ?></span>
                         <i class="fas fa-chevron-down"></i>
                     </button>
-                    <div class="dropdown-content" id="userDropdown">
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
                         <a href="profile.php" class="dropdown-item">
-                            <i class="fas fa-user-cog"></i>
-                            Perfil
+                            <i class="fas fa-user-cog"></i> <span>Perfil</span>
                         </a>
-                        <a href="auth.php?action=logout" class="dropdown-item">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Sair
+                        <button onclick="toggleTheme()" class="dropdown-item theme-toggle-btn">
+                            <i class="fas fa-moon theme-icon"></i> <span>Tema</span>
+                        </button>
+                        <a href="auth.php?action=logout" class="dropdown-item" onclick="return confirm('Deseja realmente sair?')">
+                            <i class="fas fa-sign-out-alt"></i> <span>Sair</span>
                         </a>
                     </div>
                 </div>
@@ -412,18 +414,8 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        function toggleDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        // Fechar dropdown ao clicar fora
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.user-dropdown')) {
-                const dropdown = document.getElementById('userDropdown');
-                if (dropdown) dropdown.classList.remove('show');
-            }
-        });
+        // As funções toggleUserDropdown e toggleTheme estão no script.js
     </script>
+    <script src="script.js?v=<?= time() ?>"></script>
 </body>
 </html>
