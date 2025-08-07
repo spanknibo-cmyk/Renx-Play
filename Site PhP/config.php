@@ -420,71 +420,7 @@ function renderHeader($title = '', $description = '', $keywords = '') {
 }
 
 
-// ====== FOOTER MELHORADO ======
-function renderFooter() {
-    $currentYear = date('Y');
-    echo "</main>
-<footer class='footer'>
-    <div class='container'>
-        <div class='footer-content'>
-            <div class='footer-section'>
-                <h4><i class='fas fa-gamepad'></i> " . SITE_NAME . "</h4>
-                <p>A melhor plataforma para jogos Ren'Py.</p>
-                
-            </div>
-            <div class='footer-section'>
-                <h4><i class='fas fa-info-circle'></i> Sobre</h4>
-                <ul class='footer-links'>
-                    
-                    
-                    <li><a href='#'>Contato</a></li>
-                </ul>
-            </div>
-            <div class='footer-section'>
-                <h4><i class='fas fa-shield-alt'></i> Legal</h4>
-                <ul class='footer-links'>
-                    <li><a href='#'>Termos de Uso</a></li>
-                    <li><a href='#'>Política de Privacidade</a></li>
-                    <li><a href='#'>Sobre</a></li>
-                    
-                </ul>
-            </div>
-            
-            </div>
-        </div>
-        <div class='footer-bottom'>
-            <p>&copy; {$currentYear} " . SITE_NAME . ". Desenvolvido com <i class='fas fa-heart' style='color: #e74c3c;'></i> para a comunidade.</p>
-            <p class='footer-disclaimer'>
-                <i class='fas fa-exclamation-triangle'></i> 
-                Conteúdo adulto. Proibido para menores de 18 anos.
-            </p>
-        </div>
-    </div>
-</footer>
-
-<!-- Modal para screenshots -->
-<div id='imageModal' class='modal' onclick='closeModal()' role='dialog' aria-labelledby='modalTitle' aria-hidden='true'>
-    <button class='close' onclick='closeModal()' aria-label='Fechar modal'>&times;</button>
-    <img class='modal-content' id='modalImage' alt=''>
-    <div id='caption' class='modal-caption'></div>
-    <div class='modal-controls'>
-        <button onclick='previousImage()' aria-label='Imagem anterior'><i class='fas fa-chevron-left'></i></button>
-        <button onclick='nextImage()' aria-label='Próxima imagem'><i class='fas fa-chevron-right'></i></button>
-    </div>
-</div>
-
-<!-- Loading overlay -->
-<div id='loadingOverlay' class='loading-overlay' style='display: none;'>
-    <div class='loading-spinner'>
-        <i class='fas fa-spinner fa-spin'></i>
-        <p>Carregando...</p>
-    </div>
-</div>
-
-<script src='script.js?v=" . time() . "'></script>
-</body>
-</html>";
-}
+// ====== FOOTER REMOVIDO POR SOLICITAÇÃO DO USUÁRIO ======
 
 // ====== FUNÇÕES DE EXIBIÇÃO APRIMORADAS ======
 function displayScreenshots($screenshots, $gameTitle = '', $gameId = '') {
