@@ -80,9 +80,14 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 
-                <h2><?= $action === 'register' ? 'Entrar' : 'Entrar' ?></h2>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <h2 style="margin: 0;"><?= $action === 'register' ? 'Registrar' : 'Entrar' ?></h2>
+                    <button onclick="toggleTheme()" class="theme-toggle" title="Alternar tema" style="background: none; border: none; color: hsl(var(--muted-foreground)); cursor: pointer; padding: 0.5rem; border-radius: var(--radius); transition: background-color 0.2s;">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
                 <p style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; font-size: 0.875rem;">
-                    Entre com sua conta para continuar
+                    <?= $action === 'register' ? 'Crie sua conta para continuar' : 'Entre com sua conta para continuar' ?>
                 </p>
                 
                 <div class="auth-tabs">
@@ -170,6 +175,7 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <script src="script.js?v=<?= time() ?>"></script>
     <script>
         // Auto focus no primeiro input
         document.addEventListener('DOMContentLoaded', function() {

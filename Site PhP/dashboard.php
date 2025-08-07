@@ -157,6 +157,10 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                             <i class="fas fa-user-cog"></i>
                             Perfil
                         </a>
+                        <button onclick="toggleTheme()" class="dropdown-item theme-toggle-dropdown" title="Alternar tema">
+                            <i class="fas fa-moon"></i>
+                            Tema
+                        </button>
                         <a href="auth.php?action=logout" class="dropdown-item">
                             <i class="fas fa-sign-out-alt"></i>
                             Sair

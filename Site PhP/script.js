@@ -120,26 +120,26 @@ document.addEventListener('DOMContentLoaded', () => {
 // ====== THEME TOGGLE ======
 function applyTheme(theme) {
     const root = document.documentElement;          // <html>
-    root.classList.toggle('light-mode', theme === 'light');
-    root.classList.toggle('dark-mode',  theme === 'dark');
+    root.classList.toggle('light', theme === 'light');
+    root.classList.toggle('dark',  theme === 'dark');
     localStorage.setItem('theme', theme);
 
-    // Ícone
-    const icon = document.querySelector('.theme-toggle i');
-    if (icon) {
+    // Update all theme toggle icons
+    const icons = document.querySelectorAll('.theme-toggle i, .theme-toggle-dropdown i');
+    icons.forEach(icon => {
         icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
-    }
+    });
 }
 
 function toggleTheme() {
-    const newTheme = document.documentElement.classList.contains('light-mode') ? 'dark' : 'light';
+    const newTheme = document.documentElement.classList.contains('light') ? 'dark' : 'light';
     applyTheme(newTheme);
 }
 
 // Aplica tema salvo ou preferência do SO
 window.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('theme');
-    const prefers = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    const prefers = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     applyTheme(saved || prefers);
 });
 

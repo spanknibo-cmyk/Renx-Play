@@ -410,10 +410,7 @@ function renderHeader($title = '', $description = '', $keywords = '') {
               </a>";
     }
     
-    echo "<button onclick='toggleTheme()' class='theme-toggle' title='Alternar tema'>
-            <i class='fas fa-moon'></i> <span>Tema</span>
-          </button>
-        </div>
+    echo "</div>
     </div>
 </nav>
 <main class='main-content'>";
