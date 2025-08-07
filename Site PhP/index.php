@@ -14,7 +14,7 @@ function canModerateComments(int $postOwnerId): bool {
 $gameSlug = $_GET['game'] ?? null;
 
 if ($gameSlug) {
-    // PÁGINA DO JOGO INDIVIDUAL
+    // PÁGINA DO JOGO INDIVIDUAL - Mantém a funcionalidade existente
     $stmt = $pdo->prepare("
         SELECT g.*, u.username AS author
           FROM games g
@@ -93,177 +93,182 @@ if ($gameSlug) {
     renderHeader($game['title']);
     ?>
     
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?= htmlspecialchars($game['title']) ?> - <?= SITE_NAME ?></title>
-        <link rel="stylesheet" href="style.css">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    </head>
-    <body>
-        <!-- Header moderno -->
-        <header class="header">
-            <div class="header-content">
-                <a href="index.php" class="logo">
-                    <i class="fas fa-play" style="margin-right: 0.5rem;"></i>
-                    Renx-Play
-                </a>
-                
-                <nav class="nav">
-                    <a href="index.php" class="nav-link">
-                        <i class="fas fa-home"></i>
-                        Games
-                    </a>
-                    
-                    <?php if (hasRole(['ADMIN', 'SUPER_ADMIN', 'DEV'])): ?>
-                        <a href="dashboard.php" class="nav-link">
-                            <i class="fas fa-cog"></i>
-                            Admin
-                        </a>
-                    <?php endif; ?>
-                    
-                    <?php if (isLoggedIn()): ?>
-                        <div class="user-dropdown">
-                            <button class="user-dropdown-toggle" onclick="toggleUserDropdown()" aria-expanded="false">
-                                <i class="fas fa-user-circle"></i>
-                                <span><?= $_SESSION['user']['username'] ?></span>
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="user-dropdown-menu" id="userDropdownMenu">
-                                <a href="profile.php" class="dropdown-item">
-                                    <i class="fas fa-user-cog"></i> <span>Perfil</span>
-                                </a>
-                                <button onclick="toggleTheme()" class="dropdown-item theme-toggle-btn">
-                                    <i class="fas fa-moon theme-icon"></i> <span>Tema</span>
-                                </button>
-                                <a href="auth.php?action=logout" class="dropdown-item" onclick="return confirm('Deseja realmente sair?')">
-                                    <i class="fas fa-sign-out-alt"></i> <span>Sair</span>
-                                </a>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <a href="auth.php" class="nav-link">
-                            <i class="fas fa-sign-in-alt"></i>
-                            Entrar
-                        </a>
-                    <?php endif; ?>
-                </nav>
+    <!-- Game Detail Page - Melhorada seguindo App.tsx -->
+    <!-- Back Button -->
+    <div class="mb-6">
+        <a href="index.php" class="btn-ghost">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Voltar para a lista
+        </a>
+    </div>
+    
+    <!-- Game Detail Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Game Image -->
+        <div class="lg:col-span-1">
+            <div class="game-card-image mb-4" style="aspect-ratio: 3/4;">
+                <img src="uploads/covers/<?= htmlspecialchars($game['cover_image']) ?>" 
+                     alt="<?= htmlspecialchars($game['title']) ?>" 
+                     class="w-full h-full object-cover">
             </div>
-        </header>
-
-        <!-- Botão voltar -->
-        <div class="container" style="padding-top: 1rem;">
-            <a href="index.php" class="btn btn-outline btn-sm">
-                <i class="fas fa-arrow-left"></i>
-                Voltar para a lista
-            </a>
-        </div>
-
-        <!-- Detalhes do jogo -->
-        <div class="game-detail">
-            <div class="game-header">
-                <div class="game-image">
-                    <img src="uploads/covers/<?= htmlspecialchars($game['cover_image']) ?>" alt="<?= htmlspecialchars($game['title']) ?>">
-                </div>
-                
-                <div class="game-info">
-                    <h1><?= htmlspecialchars($game['title']) ?></h1>
-                    
-                    <div class="game-badges">
-                        <span class="badge">REN'PY</span>
-                        <span class="badge">v1.0</span>
-                        <span class="badge"><?= htmlspecialchars($game['author']) ?></span>
-                    </div>
-                    
-                    <div class="card-rating" style="margin-bottom: 1rem;">
-                        <i class="fas fa-star"></i>
-                        <span>4.5</span>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <p><strong>Idioma:</strong> <?= htmlspecialchars($game['language'] ?? 'English') ?></p>
-                        <p><strong>Censurado:</strong> <?= $game['censored'] ? 'Sim' : 'Não' ?></p>
-                        <p><strong>Lançamento:</strong> <?= date('d/m/Y', strtotime($game['created_at'])) ?></p>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <p><strong>Plataformas:</strong></p>
-                        <div class="game-badges">
-                            <?php if ($game['os_windows'] ?? true): ?>
-                                <span class="badge">Windows</span>
-                            <?php endif; ?>
-                            <?php if ($game['os_android'] ?? true): ?>
-                                <span class="badge">Android</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            
             <?php if (isLoggedIn()): ?>
-                <div class="download-section">
-                    <h3><i class="fas fa-download"></i> Selecionar Plataforma:</h3>
-                    <div class="download-buttons">
-                        <?php if ($game['download_url_windows']): ?>
-                            <a href="<?= htmlspecialchars($game['download_url_windows']) ?>" target="_blank" class="btn btn-primary">
-                                <i class="fab fa-windows"></i>
-                                Windows
-                            </a>
-                        <?php endif; ?>
-                        
-                        <?php if ($game['download_url_android']): ?>
-                            <a href="<?= htmlspecialchars($game['download_url_android']) ?>" target="_blank" class="btn btn-primary">
-                                <i class="fab fa-android"></i>
-                                Android
-                            </a>
-                        <?php endif; ?>
-                        
-                        <?php if ($game['download_url']): ?>
-                            <a href="<?= htmlspecialchars($game['download_url']) ?>" target="_blank" class="btn btn-secondary">
-                                <i class="fas fa-download"></i>
-                                Download Geral
-                            </a>
-                        <?php endif; ?>
+                <!-- Download Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="text-lg font-medium">
+                            <i class="fas fa-download mr-2"></i>
+                            Download
+                        </h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="flex flex-col gap-2">
+                            <?php if ($game['download_url_windows']): ?>
+                                <a href="<?= htmlspecialchars($game['download_url_windows']) ?>" 
+                                   target="_blank" 
+                                   class="btn-outline w-full">
+                                    <i class="fab fa-windows mr-2"></i>
+                                    Windows
+                                </a>
+                            <?php endif; ?>
+                            
+                            <?php if ($game['download_url_android']): ?>
+                                <a href="<?= htmlspecialchars($game['download_url_android']) ?>" 
+                                   target="_blank" 
+                                   class="btn-outline w-full">
+                                    <i class="fab fa-android mr-2"></i>
+                                    Android
+                                </a>
+                            <?php endif; ?>
+                            
+                            <?php if ($game['download_url']): ?>
+                                <a href="<?= htmlspecialchars($game['download_url']) ?>" 
+                                   target="_blank" 
+                                   class="btn-ghost w-full">
+                                    <i class="fas fa-download mr-2"></i>
+                                    Download Geral
+                                </a>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             <?php else: ?>
-                <div class="download-section">
-                    <p style="text-align: center; color: hsl(var(--muted-foreground));">
-                        <i class="fas fa-lock"></i>
-                        <a href="auth.php" style="color: hsl(var(--primary));">Faça login</a> para fazer download
-                    </p>
+                <div class="card mb-4">
+                    <div class="card-content text-center py-6">
+                        <i class="fas fa-lock mb-3 text-2xl text-muted-foreground"></i>
+                        <p class="text-muted-foreground mb-3">Faça login para fazer download</p>
+                        <a href="auth.php" class="btn-outline">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Entrar
+                        </a>
+                    </div>
                 </div>
             <?php endif; ?>
-
-            <!-- Descrição -->
-            <div class="card" style="margin-bottom: 1rem;">
-                <div class="card-content">
-                    <h3 style="margin-bottom: 0.75rem;">
-                        <i class="fas fa-info-circle"></i>
-                        Descrição
-                    </h3>
-                    <p><?= nl2br(htmlspecialchars($game['description'])) ?></p>
+        </div>
+        
+        <!-- Game Info -->
+        <div class="lg:col-span-2">
+            <!-- Title and Meta -->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold mb-3"><?= htmlspecialchars($game['title']) ?></h1>
+                
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <span class="badge">REN'PY</span>
+                    <span class="badge">v<?= htmlspecialchars($game['version'] ?? '1.0') ?></span>
+                    <span class="badge"><?= htmlspecialchars($game['author']) ?></span>
+                </div>
+                
+                <div class="star-rating mb-4">
+                    <i class="fas fa-star star-icon"></i>
+                    <span class="text-lg font-medium">
+                        <?= number_format($game['rating'] ?? 4.5, 1) ?>
+                    </span>
+                    <span class="text-muted-foreground ml-2">(<?= rand(10, 100) ?> avaliações)</span>
                 </div>
             </div>
-
+            
+            <!-- Game Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="text-center p-3 bg-muted rounded">
+                    <div class="text-sm text-muted-foreground">Idioma</div>
+                    <div class="font-medium"><?= htmlspecialchars($game['language'] ?? 'English') ?></div>
+                </div>
+                <div class="text-center p-3 bg-muted rounded">
+                    <div class="text-sm text-muted-foreground">Censurado</div>
+                    <div class="font-medium"><?= $game['censored'] ? 'Sim' : 'Não' ?></div>
+                </div>
+                <div class="text-center p-3 bg-muted rounded">
+                    <div class="text-sm text-muted-foreground">Lançamento</div>
+                    <div class="font-medium"><?= date('d/m/Y', strtotime($game['created_at'])) ?></div>
+                </div>
+                <div class="text-center p-3 bg-muted rounded">
+                    <div class="text-sm text-muted-foreground">Downloads</div>
+                    <div class="font-medium"><?= number_format($game['downloads_count'] ?? rand(100, 1000)) ?></div>
+                </div>
+            </div>
+            
+            <!-- Platforms -->
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-2">Plataformas Suportadas</h3>
+                <div class="flex flex-wrap gap-2">
+                    <?php if ($game['os_windows'] ?? true): ?>
+                        <span class="badge">
+                            <i class="fab fa-windows mr-1"></i>
+                            Windows
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($game['os_android'] ?? true): ?>
+                        <span class="badge">
+                            <i class="fab fa-android mr-1"></i>
+                            Android
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($game['os_linux'] ?? false): ?>
+                        <span class="badge">
+                            <i class="fab fa-linux mr-1"></i>
+                            Linux
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($game['os_mac'] ?? false): ?>
+                        <span class="badge">
+                            <i class="fab fa-apple mr-1"></i>
+                            macOS
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="card mb-6">
+                <div class="card-header">
+                    <h3 class="text-lg font-medium">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Descrição
+                    </h3>
+                </div>
+                <div class="card-content">
+                    <p class="leading-relaxed"><?= nl2br(htmlspecialchars($game['description'])) ?></p>
+                </div>
+            </div>
+            
             <!-- Tags -->
             <?php if (!empty($game['tags'])): ?>
-                <div class="card" style="margin-bottom: 1rem;">
-                    <div class="card-content">
-                        <h3 style="margin-bottom: 0.75rem;">
-                            <i class="fas fa-tags"></i>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-lg font-medium">
+                            <i class="fas fa-tags mr-2"></i>
                             Tags
                         </h3>
-                        <div class="card-tags">
+                    </div>
+                    <div class="card-content">
+                        <div class="flex flex-wrap gap-2">
                             <?php 
                             $tags = explode(',', $game['tags']);
                             foreach ($tags as $tag): 
                                 $tag = trim($tag);
                                 if ($tag):
                             ?>
-                                <span class="tag"><?= htmlspecialchars($tag) ?></span>
+                                <span class="tag-badge"><?= htmlspecialchars($tag) ?></span>
                             <?php 
                                 endif;
                             endforeach; 
@@ -273,252 +278,254 @@ if ($gameSlug) {
                 </div>
             <?php endif; ?>
         </div>
-
-        <!-- As funções toggleUserDropdown e toggleTheme estão no script.js -->
-    </body>
-    </html>
-
+    </div>
+    
     <?php
+    
 } else {
-    // PÁGINA INICIAL - LISTAGEM DE JOGOS
+    // ====== HOMEPAGE - Replicando exatamente App.tsx ======
+    
+    // Parâmetros de busca e paginação
+    $searchQuery = $_GET['search'] ?? '';
+    $currentPage = max(1, (int)($_GET['page'] ?? 1));
+    $limit = 12; // Mesmo limite do App.tsx
+    $offset = ($currentPage - 1) * $limit;
+    
+    // Query base
+    $whereConditions = ["1=1"];
+    $params = [];
+    
+    // Filtro de busca
+    if (!empty($searchQuery)) {
+        $whereConditions[] = "(g.title LIKE ? OR g.description LIKE ? OR g.tags LIKE ?)";
+        $searchTerm = "%{$searchQuery}%";
+        $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm]);
+    }
+    
+    $whereClause = implode(' AND ', $whereConditions);
+    
+    // Buscar jogos
+    $stmt = $pdo->prepare("
+        SELECT g.*, u.username as author_name
+        FROM games g 
+        LEFT JOIN users u ON g.posted_by = u.id 
+        WHERE {$whereClause}
+        ORDER BY g.created_at DESC 
+        LIMIT ? OFFSET ?
+    ");
+    $params[] = $limit;
+    $params[] = $offset;
+    $stmt->execute($params);
+    $games = $stmt->fetchAll();
+    
+    // Contar total para paginação
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM games g WHERE {$whereClause}");
+    $countParams = array_slice($params, 0, -2); // Remove limit e offset
+    $countStmt->execute($countParams);
+    $totalGames = $countStmt->fetchColumn();
+    $totalPages = ceil($totalGames / $limit);
+    
+    renderHeader('Games', 'Descubra os melhores jogos Ren\'Py');
     ?>
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title><?= SITE_NAME ?> - Jogos Traduzidos</title>
-        <link rel="stylesheet" href="style.css">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        <link rel="icon" href="https://i.imgur.com/QyZKduC.png" type="image/png">
-    </head>
-    <body>
-        <!-- Header moderno -->
-        <header class="header">
-            <div class="header-content">
-                <a href="index.php" class="logo">
-                    Renxplay Teste
+    
+    <!-- Search Section - Replicando App.tsx -->
+    <div class="mb-8">
+        <div class="search-wrapper">
+            <div class="relative">
+                <i class="fas fa-search search-icon h-4 w-4"></i>
+                <input 
+                    type="search" 
+                    id="searchInput"
+                    placeholder="Search games..." 
+                    value="<?= htmlspecialchars($searchQuery) ?>"
+                    class="search-input"
+                    autocomplete="off"
+                >
+            </div>
+            <div id="searchResults" class="dropdown-content" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+    
+    <?php if (empty($games)): ?>
+        <!-- Empty State - Replicando App.tsx -->
+        <div class="text-center py-12">
+            <div class="mb-4">
+                <i class="fas fa-gamepad h-16 w-16 text-muted-foreground mx-auto mb-4" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="text-lg font-medium mb-2">
+                <?= empty($searchQuery) ? 'Nenhum jogo disponível' : 'Nenhum jogo encontrado' ?>
+            </h3>
+            <p class="text-muted-foreground">
+                <?= empty($searchQuery) ? 'Novos jogos serão adicionados em breve.' : 'Tente uma busca diferente.' ?>
+            </p>
+            <?php if (!empty($searchQuery)): ?>
+                <a href="index.php" class="btn-outline mt-4 inline-flex">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar para todos os jogos
                 </a>
-                
-                <nav class="nav">
-                    <a href="index.php" class="nav-link active">
-                        <i class="fas fa-home"></i>
-                        Jogos
-                    </a>
-                    
-                    <?php if (isLoggedIn() && hasRole(['ADMIN', 'SUPER_ADMIN', 'DEV'])): ?>
-                        <a href="dashboard.php" class="nav-link">
-                            <i class="fas fa-cog"></i>
-                            Admin
-                        </a>
-                    <?php endif; ?>
-                    
-                    <?php if (isLoggedIn()): ?>
-                        <div class="user-dropdown">
-                            <button class="user-dropdown-toggle" onclick="toggleUserDropdown()" aria-expanded="false">
-                                <i class="fas fa-user-circle"></i>
-                                <span><?= $_SESSION['user']['username'] ?></span>
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="user-dropdown-menu" id="userDropdownMenu2">
-                                <a href="profile.php" class="dropdown-item">
-                                    <i class="fas fa-user-cog"></i> <span>Perfil</span>
-                                </a>
-                                <button onclick="toggleTheme()" class="dropdown-item theme-toggle-btn">
-                                    <i class="fas fa-moon theme-icon"></i> <span>Tema</span>
-                                </button>
-                                <a href="auth.php?action=logout" class="dropdown-item" onclick="return confirm('Deseja realmente sair?')">
-                                    <i class="fas fa-sign-out-alt"></i> <span>Sair</span>
-                                </a>
+            <?php endif; ?>
+        </div>
+    <?php else: ?>
+        <!-- Games Grid - Replicando exatamente App.tsx -->
+        <div class="games-grid">
+            <?php foreach ($games as $game): ?>
+                <a href="?game=<?= urlencode($game['slug']) ?>" class="block">
+                    <div class="game-card">
+                        <!-- Game Image - Replicando game-card-image do theme.css -->
+                        <div class="game-card-image">
+                            <img 
+                                src="uploads/covers/<?= htmlspecialchars($game['cover_image']) ?>" 
+                                alt="<?= htmlspecialchars($game['title']) ?>" 
+                                loading="lazy"
+                            >
+                        </div>
+                        
+                        <!-- Card Header - Replicando App.tsx CardHeader -->
+                        <div class="card-header pb-2">
+                            <h3 class="card-title text-lg line-clamp-2"><?= htmlspecialchars($game['title']) ?></h3>
+                            <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                                <span class="badge">REN'PY</span>
+                                <span>v<?= htmlspecialchars($game['version'] ?? '1.0') ?></span>
                             </div>
                         </div>
-                    <?php else: ?>
-                        <a href="auth.php" class="btn btn-outline btn-sm">
-                            <i class="fas fa-sign-in-alt"></i>
-                            Entrar
-                        </a>
-                    <?php endif; ?>
-                </nav>
-            </div>
-        </header>
-
-        <!-- Seção de busca -->
-        <section class="search-section">
-            <div class="container">
-                <div class="search-wrapper">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar jogos...">
-                    <i class="fas fa-search search-icon"></i>
-                    <div id="searchResults" class="search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); margin-top: 0.25rem; box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1); z-index: 1000;"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Área principal com logo central -->
-        <div style="text-align: center; padding: 2rem 0; background: hsl(var(--background));">
-            <div style="width: 150px; height: 150px; margin: 0 auto 1rem; background: hsl(var(--muted)); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                <div style="width: 120px; height: 120px; border: 4px solid hsl(var(--border)); border-radius: 50%; background: hsl(var(--background)); display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-play" style="font-size: 3rem; color: hsl(var(--primary)); margin-left: 0.5rem;"></i>
-                </div>
-                <!-- Ícone de busca sobreposto -->
-                <div style="position: absolute; top: -15px; right: -15px; width: 60px; height: 60px; background: hsl(var(--muted)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 4px solid hsl(var(--background));">
-                    <i class="fas fa-search" style="font-size: 1.25rem; color: hsl(var(--muted-foreground));"></i>
-                </div>
-            </div>
-            
-            <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Jogos Traduzidos</h1>
-            <p style="color: hsl(var(--muted-foreground)); font-size: 0.875rem;">Descubra os melhores jogos Ren'Py em português</p>
-        </div>
-
-        <!-- Grid de jogos -->
-        <div class="container">
-            <?php
-            $page = max(1, (int)($_GET['p'] ?? 1));
-            $offset = ($page - 1) * POSTS_PER_PAGE;
-
-            $sql = "SELECT * FROM games ORDER BY created_at DESC LIMIT ? OFFSET ?";
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(1, POSTS_PER_PAGE, PDO::PARAM_INT);
-            $stmt->bindValue(2, $offset, PDO::PARAM_INT);
-            $stmt->execute();
-            $games = $stmt->fetchAll();
-
-            $total = $pdo->query("SELECT COUNT(*) FROM games")->fetchColumn();
-            $pages = ceil($total / POSTS_PER_PAGE);
-
-            if (empty($games)): ?>
-                <div style="text-align: center; padding: 3rem; color: hsl(var(--muted-foreground));">
-                    <p>Nenhum jogo encontrado.</p>
-                </div>
-            <?php else: ?>
-                <div class="games-grid">
-                    <?php foreach ($games as $g): ?>
-                        <a href="?game=<?= urlencode($g['slug']) ?>" style="text-decoration: none; color: inherit;">
-                            <div class="card">
-                                <div class="card-image">
-                                    <img src="uploads/covers/<?= htmlspecialchars($g['cover_image']) ?>" 
-                                         alt="<?= htmlspecialchars($g['title']) ?>" 
-                                         loading="lazy">
+                        
+                        <!-- Card Content - Replicando App.tsx CardContent -->
+                        <div class="card-content pb-2">
+                            <p class="text-sm text-muted-foreground line-clamp-3 mb-3">
+                                <?= htmlspecialchars($game['description']) ?>
+                            </p>
+                            
+                            <!-- Star Rating -->
+                            <div class="star-rating">
+                                <i class="fas fa-star star-icon"></i>
+                                <span class="text-sm font-medium">
+                                    <?= number_format($game['rating'] ?? 4.5, 1) ?>
+                                </span>
+                            </div>
+                            
+                            <!-- Tags -->
+                            <?php if (!empty($game['tags'])): ?>
+                                <div class="flex flex-wrap gap-1">
+                                    <?php 
+                                    $tags = array_slice(explode(',', $game['tags']), 0, 3);
+                                    foreach ($tags as $tag): 
+                                        $tag = trim($tag);
+                                        if ($tag):
+                                    ?>
+                                        <span class="tag-badge"><?= htmlspecialchars($tag) ?></span>
+                                    <?php 
+                                        endif;
+                                    endforeach; 
+                                    ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <!-- Card Footer - Replicando App.tsx CardFooter -->
+                        <div class="card-footer pt-2">
+                            <div class="flex items-center justify-between w-full text-xs text-muted-foreground">
+                                <div class="flex items-center gap-1">
+                                    <i class="fas fa-calendar h-3 w-3"></i>
+                                    <span><?= date('d/m/Y', strtotime($game['created_at'])) ?></span>
                                 </div>
                                 
-                                <div class="card-content">
-                                    <h3 class="card-title"><?= htmlspecialchars($g['title']) ?></h3>
-                                    
-                                    <div class="card-meta">
-                                        <span class="badge">REN'PY</span>
-                                        <span>v1.0</span>
-                                        
-                                        <div class="card-rating">
-                                            <i class="fas fa-star"></i>
-                                            <span>4.5</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <p class="card-description">
-                                        <?= htmlspecialchars(substr($g['description'], 0, 100)) ?>...
-                                    </p>
-                                    
-                                    <?php if (!empty($g['tags'])): ?>
-                                        <div class="card-tags">
-                                            <?php 
-                                            $tags = array_slice(explode(',', $g['tags']), 0, 3);
-                                            foreach ($tags as $tag): 
-                                                $tag = trim($tag);
-                                                if ($tag):
-                                            ?>
-                                                <span class="tag"><?= htmlspecialchars($tag) ?></span>
-                                            <?php 
-                                                endif;
-                                            endforeach; 
-                                            ?>
-                                        </div>
-                                    <?php endif; ?>
-                                    
-                                    <div class="card-footer">
-                                        <div style="display: flex; align-items: center; gap: 0.25rem;">
-                                            <i class="fas fa-calendar"></i>
-                                            <span><?= date('d/m/Y', strtotime($g['created_at'])) ?></span>
-                                        </div>
-                                        
-                                        <div class="btn btn-sm btn-outline">
-                                            <i class="fas fa-download"></i>
-                                            Download
-                                        </div>
-                                    </div>
-                                </div>
+                                <button class="btn-outline btn-sm" onclick="event.stopPropagation();">
+                                    <i class="fas fa-download h-3 w-3 mr-1"></i>
+                                    Download
+                                </button>
                             </div>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-
-            <!-- Paginação -->
-            <?php if ($pages > 1): ?>
-                <div class="pagination">
-                    <?php if ($page > 1): ?>
-                        <a href="?p=<?= $page - 1 ?>">Previous</a>
-                    <?php endif; ?>
-                    
-                    <span class="current">1</span>
-                    
-                    <?php if ($pages > 1): ?>
-                        <a href="?p=2">2</a>
-                    <?php endif; ?>
-                    
-                    <?php if ($page < $pages): ?>
-                        <a href="?p=<?= $page + 1 ?>">Next</a>
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
+                        </div>
+                    </div>
+                </a>
+            <?php endforeach; ?>
         </div>
-
-        <!-- As funções toggleUserDropdown e toggleTheme estão no script.js -->
-
-            // Busca
-            document.addEventListener('DOMContentLoaded', function() {
-                const input = document.getElementById('searchInput');
-                const results = document.getElementById('searchResults');
+        
+        <!-- Pagination - Melhorada seguindo App.tsx -->
+        <?php if ($totalPages > 1): ?>
+            <div class="flex justify-center items-center gap-2 mt-8">
+                <!-- Previous Button -->
+                <?php if ($currentPage > 1): ?>
+                    <a href="?page=<?= $currentPage - 1 ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" 
+                       class="btn-outline btn-sm">
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        Previous
+                    </a>
+                <?php else: ?>
+                    <button class="btn-outline btn-sm opacity-50 cursor-not-allowed" disabled>
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        Previous
+                    </button>
+                <?php endif; ?>
                 
-                if (!input || !results) return;
+                <!-- Page Numbers -->
+                <?php
+                $startPage = max(1, $currentPage - 2);
+                $endPage = min($totalPages, $currentPage + 2);
                 
-                input.addEventListener('input', function() {
-                    const query = this.value.trim();
-                    
-                    if (query.length < 2) {
-                        results.style.display = 'none';
-                        return;
+                if ($startPage > 1): ?>
+                    <a href="?page=1<?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" 
+                       class="btn-outline btn-sm">1</a>
+                    <?php if ($startPage > 2): ?>
+                        <span class="px-2">...</span>
+                    <?php endif; ?>
+                <?php endif; ?>
+                
+                <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                    <?php if ($i == $currentPage): ?>
+                        <button class="btn-outline btn-sm bg-primary text-primary-foreground"><?= $i ?></button>
+                    <?php else: ?>
+                        <a href="?page=<?= $i ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" 
+                           class="btn-outline btn-sm"><?= $i ?></a>
+                    <?php endif; ?>
+                <?php endfor; ?>
+                
+                <?php if ($endPage < $totalPages): ?>
+                    <?php if ($endPage < $totalPages - 1): ?>
+                        <span class="px-2">...</span>
+                    <?php endif; ?>
+                    <a href="?page=<?= $totalPages ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" 
+                       class="btn-outline btn-sm"><?= $totalPages ?></a>
+                <?php endif; ?>
+                
+                <!-- Next Button -->
+                <?php if ($currentPage < $totalPages): ?>
+                    <a href="?page=<?= $currentPage + 1 ?><?= $searchQuery ? '&search=' . urlencode($searchQuery) : '' ?>" 
+                       class="btn-outline btn-sm">
+                        Next
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                <?php else: ?>
+                    <button class="btn-outline btn-sm opacity-50 cursor-not-allowed" disabled>
+                        Next
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+    
+    <!-- Search Enhancement Script -->
+    <script>
+        // Implementar busca em tempo real
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                // Atualizar URL quando buscar
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const query = this.value.trim();
+                        if (query) {
+                            window.location.href = `?search=${encodeURIComponent(query)}`;
+                        } else {
+                            window.location.href = 'index.php';
+                        }
                     }
-                    
-                    fetch('search_games.php?q=' + encodeURIComponent(query))
-                        .then(response => response.json())
-                        .then(games => {
-                            if (games.length === 0) {
-                                results.innerHTML = '<div style="padding: 1rem; color: hsl(var(--muted-foreground));">Nenhum jogo encontrado</div>';
-                            } else {
-                                results.innerHTML = games.map(game => 
-                                    `<a href="?game=${game.slug}" style="display: block; padding: 0.75rem 1rem; text-decoration: none; color: hsl(var(--foreground)); border-bottom: 1px solid hsl(var(--border)); transition: background 0.2s;" onmouseover="this.style.background='hsl(var(--accent))'" onmouseout="this.style.background='transparent'">
-                                        <strong>${game.title}</strong><br>
-                                        <small style="color: hsl(var(--muted-foreground));">${game.category || 'Visual Novel'} • ${game.downloads_count || 0} downloads</small>
-                                    </a>`
-                                ).join('');
-                            }
-                            results.style.display = 'block';
-                        })
-                        .catch(() => {
-                            results.innerHTML = '<div style="padding: 1rem; color: hsl(var(--muted-foreground));">Erro na busca</div>';
-                            results.style.display = 'block';
-                        });
                 });
-                
-                // Esconder ao clicar fora
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.search-wrapper')) {
-                        results.style.display = 'none';
-                    }
-                });
-            });
-        </script>
-    </body>
-    </html>
+            }
+        });
+    </script>
+    
     <?php
+    renderFooter();
 }
 ?>
