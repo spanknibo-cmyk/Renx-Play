@@ -361,21 +361,7 @@ if ($gameSlug) {
             </div>
         </section>
 
-        <!-- Área principal com logo central -->
-        <div style="text-align: center; padding: 2rem 0; background: hsl(var(--background));">
-            <div style="width: 150px; height: 150px; margin: 0 auto 1rem; background: hsl(var(--muted)); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                <div style="width: 120px; height: 120px; border: 4px solid hsl(var(--border)); border-radius: 50%; background: hsl(var(--background)); display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-play" style="font-size: 3rem; color: hsl(var(--primary)); margin-left: 0.5rem;"></i>
-                </div>
-                <!-- Ícone de busca sobreposto -->
-                <div style="position: absolute; top: -15px; right: -15px; width: 60px; height: 60px; background: hsl(var(--muted)); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 4px solid hsl(var(--background));">
-                    <i class="fas fa-search" style="font-size: 1.25rem; color: hsl(var(--muted-foreground));"></i>
-                </div>
-            </div>
-            
-            <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Jogos Traduzidos</h1>
-            <p style="color: hsl(var(--muted-foreground)); font-size: 0.875rem;">Descubra os melhores jogos Ren'Py em português</p>
-        </div>
+        <!-- Espaço da home limpo (ícone e textos removidos) -->
 
         <!-- Grid de jogos -->
         <div class="container">
