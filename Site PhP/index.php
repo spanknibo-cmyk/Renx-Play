@@ -447,21 +447,7 @@ if ($gameSlug) {
 
             <!-- Paginação -->
             <?php if ($pages > 1): ?>
-                <div class="pagination">
-                    <?php if ($page > 1): ?>
-                        <a href="?p=<?= $page - 1 ?>">Previous</a>
-                    <?php endif; ?>
-                    
-                    <span class="current">1</span>
-                    
-                    <?php if ($pages > 1): ?>
-                        <a href="?p=2">2</a>
-                    <?php endif; ?>
-                    
-                    <?php if ($page < $pages): ?>
-                        <a href="?p=<?= $page + 1 ?>">Next</a>
-                    <?php endif; ?>
-                </div>
+                <?= renderPagination($page, $pages, '', [], 'p', PAGINATION_RANGE) ?>
             <?php endif; ?>
         </div>
 

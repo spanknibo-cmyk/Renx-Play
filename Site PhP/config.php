@@ -11,6 +11,7 @@ define('DB_USER', 'csmods'); // usuário criado para conexão local
 define('DB_PASS', 'zcbm');                   // senha vazia (se não tiver senha local)
 define('SITE_NAME', 'Renxplay Teste');  
 define('POSTS_PER_PAGE', 10);
+define('PAGINATION_RANGE', 2);
 define('MAX_UPLOAD_SIZE', 10485760);    // 10MB
 define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
 // Configurações de segurança
@@ -634,54 +635,43 @@ function getTotalUsers() {
 }
 
 // ====== FUNÇÕES DE PAGINAÇÃO ======
-function renderPagination($currentPage, $totalPages, $baseUrl = '', $params = []) {
+function renderPagination($currentPage, $totalPages, $baseUrl = '', $params = [], $pageParam = 'p', $range = PAGINATION_RANGE) {
     if ($totalPages <= 1) return '';
-    
+
+    $visible = max(1, $range * 2 + 1);
+
+    if ($totalPages <= $visible) {
+        $start = 1;
+        $end = $totalPages;
+    } else {
+        $start = max(1, $currentPage - $range);
+        $start = min($start, $totalPages - $visible + 1);
+        $end = min($totalPages, $start + $visible - 1);
+    }
+
+    $buildUrl = function (int $page) use ($baseUrl, $params, $pageParam): string {
+        $query = http_build_query(array_merge($params, [$pageParam => $page]));
+        return ($baseUrl ? $baseUrl : '') . '?' . $query;
+    };
+
     $html = "<div class='pagination' role='navigation' aria-label='Páginas'>";
-    
-    // Página anterior
+
     if ($currentPage > 1) {
-        $prevUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => $currentPage - 1]));
-        $html .= "<a href='{$prevUrl}' class='btn btn-secondary' aria-label='Página anterior'>
-                    <i class='fas fa-chevron-left'></i> Anterior
-                  </a>";
+        $html .= "<a href='" . $buildUrl($currentPage - 1) . "' class='btn btn-secondary' aria-label='Página anterior'>&larr;</a>";
     }
-    
-    // Páginas numeradas
-    $start = max(1, $currentPage - 2);
-    $end = min($totalPages, $currentPage + 2);
-    
-    if ($start > 1) {
-        $firstUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => 1]));
-        $html .= "<a href='{$firstUrl}' class='btn btn-secondary'>1</a>";
-        if ($start > 2) {
-            $html .= "<span class='pagination-dots'>...</span>";
-        }
-    }
-    
+
     for ($i = $start; $i <= $end; $i++) {
-        $pageUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => $i]));
-        $activeClass = $i == $currentPage ? ' active' : '';
-        $html .= "<a href='{$pageUrl}' class='btn btn-secondary{$activeClass}' " . 
-                 ($i == $currentPage ? 'aria-current="page"' : '') . ">{$i}</a>";
-    }
-    
-    if ($end < $totalPages) {
-        if ($end < $totalPages - 1) {
-            $html .= "<span class='pagination-dots'>...</span>";
+        if ($i === (int)$currentPage) {
+            $html .= "<span class='current' aria-current='page'>{$i}</span>";
+        } else {
+            $html .= "<a href='" . $buildUrl($i) . "' class='btn btn-secondary'>{$i}</a>";
         }
-        $lastUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => $totalPages]));
-        $html .= "<a href='{$lastUrl}' class='btn btn-secondary'>{$totalPages}</a>";
     }
-    
-    // Próxima página
+
     if ($currentPage < $totalPages) {
-        $nextUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => $currentPage + 1]));
-        $html .= "<a href='{$nextUrl}' class='btn btn-secondary' aria-label='Próxima página'>
-                    Próxima <i class='fas fa-chevron-right'></i>
-                  </a>";
+        $html .= "<a href='" . $buildUrl($currentPage + 1) . "' class='btn btn-secondary' aria-label='Próxima página'>&rarr;</a>";
     }
-    
+
     $html .= "</div>";
     return $html;
 }
