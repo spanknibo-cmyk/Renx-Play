@@ -13,6 +13,7 @@ define('SITE_NAME', 'Renxplay Teste');
 define('POSTS_PER_PAGE', 10);
 define('PAGINATION_RANGE', 2);
 define('MAX_UPLOAD_SIZE', 10485760);    // 10MB
+define('MAX_GIF_UPLOAD_SIZE', 31457280); // 30MB para GIFs animados
 define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
 // Configurações de segurança
 define('UPLOAD_PATH', __DIR__ . '/uploads/');
@@ -228,8 +229,13 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
         return false;
     }
     
-    if ($file['size'] > MAX_UPLOAD_SIZE) {
-        error_log("ERRO: Arquivo muito grande: " . formatBytes($file['size']));
+    // Determinar extensão antes para aplicar limites específicos
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    
+    // Limite por tipo (GIF pode ser maior)
+    $maxSizeAllowed = ($ext === 'gif') ? (defined('MAX_GIF_UPLOAD_SIZE') ? MAX_GIF_UPLOAD_SIZE : MAX_UPLOAD_SIZE) : MAX_UPLOAD_SIZE;
+    if (($file['size'] ?? 0) > $maxSizeAllowed) {
+        error_log("ERRO: Arquivo muito grande para {$ext}: " . formatBytes($file['size']) . " (limite: " . formatBytes($maxSizeAllowed) . ")");
         return false;
     }
     
@@ -238,8 +244,7 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
         return false;
     }
     
-    // Verificar extensão
-    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    // Verificar extensão permitida
     if (!in_array($ext, ALLOWED_IMAGE_TYPES)) {
         error_log("ERRO: Extensão não permitida: $ext");
         return false;
@@ -257,7 +262,7 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
     
     error_log("Processando: " . $file['name'] . " -> " . $newName);
     
-    // Otimizar e salvar
+    // Otimizar e salvar (não otimiza GIF para preservar animação)
     if ($optimize && in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
         if (optimizeImage($file['tmp_name'], $fullPath)) {
             chmod($fullPath, 0644);
@@ -549,6 +554,7 @@ function displayScreenshots($screenshots, $gameTitle = '', $gameId = '', $showTi
         $isGif = strtolower(pathinfo($screenshot, PATHINFO_EXTENSION)) === 'gif';
         $displayPath = $isGif ? $imagePath : (file_exists($thumbnailPath) ? $thumbnailPath : $imagePath);
         
+        $onError = handleImageError();
         $html .= "<div class='screenshot-item' data-index='{$index}' onclick='openModal(this.querySelector(\"img.screenshot\"), {$index})'>
                     <img src='{$displayPath}' 
                          data-full='{$imagePath}'
@@ -556,8 +562,7 @@ function displayScreenshots($screenshots, $gameTitle = '', $gameId = '', $showTi
                          class='screenshot' 
                          loading='lazy'
                          onload='this.classList.add(\"loaded\")'
-                         onerror='handleImageError(this)'>
-                    <div class='screenshot-overlay'>
+                         onerror=\"{$onError}\">\n                    <div class='screenshot-overlay'>
                         <i class='fas fa-search-plus'></i>
                     </div>
                   </div>";

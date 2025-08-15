@@ -143,11 +143,14 @@ if ($action === 'update_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$g || !canManageGame($g['posted_by'], $pdo)) { die('403'); }
 
     $cover = $g['cover_image'];
+    $uploadNotices = [];
     if (!empty($_FILES['cover_image']['name'])) {
         $new = uploadFile($_FILES['cover_image'], 'uploads/covers/');
         if ($new) {
             if ($cover && file_exists('uploads/covers/' . $cover)) @unlink('uploads/covers/' . $cover);
             $cover = $new;
+        } else {
+            $uploadNotices[] = 'Falha no upload da nova capa. Verifique o formato (JPG, PNG, WEBP ou GIF) e o tamanho (até 30MB para GIF).';
         }
     }
 
@@ -160,7 +163,12 @@ if ($action === 'update_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_FILES['screenshots']['name'][0])) {
         $remaining = MAX_SCREENSHOTS - count($screenshotsExisting);
         if ($remaining > 0) {
+            $beforeCount = 0; foreach($_FILES['screenshots']['name'] as $nm){ if($nm) $beforeCount++; }
             $screenshotsNew = uploadMultipleFiles($_FILES['screenshots'], 'uploads/screenshots/', $remaining);
+            $afterCount = count($screenshotsNew);
+            if ($afterCount < $beforeCount) {
+                $uploadNotices[] = 'Algumas imagens extras não foram aceitas (formato ou tamanho excedido).';
+            }
         }
     }
     $screenshotsAll = (isset($_POST['replace_all']) && $_POST['replace_all']) ? ($screenshotsNew ?: []) : array_values(array_filter(array_merge($screenshotsExisting ?: [], $screenshotsNew ?: [])));
@@ -210,7 +218,12 @@ if ($action === 'update_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $id
     ]);
     
-    $message = $ok ? "<div class='alert alert-success'><i class='fas fa-check'></i> Jogo atualizado!</div>" : "<div class='alert alert-error'>Erro ao atualizar</div>";
+    if ($ok) {
+        $noticeText = $uploadNotices ? ('<br>' . implode('<br>', $uploadNotices)) : '';
+        $message = "<div class='alert alert-success'><i class='fas fa-check'></i> Jogo atualizado!{$noticeText}</div>";
+    } else {
+        $message = "<div class='alert alert-error'>Erro ao atualizar</div>";
+    }
     $action = 'home';
 }
 
