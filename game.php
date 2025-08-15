@@ -101,7 +101,7 @@ renderHeader($game['title']);
 <div class="game-detail">
     <div class="game-header">
         <div class="game-image">
-            <img src="uploads/covers/<?= htmlspecialchars($game['cover_image']) ?>" alt="<?= htmlspecialchars($game['title']) ?>">
+            <?= renderImageTag('uploads/covers/' . $game['cover_image'], $game['title']) ?>
         </div>
 
         <div class="game-info">

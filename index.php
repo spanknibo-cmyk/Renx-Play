@@ -50,9 +50,7 @@ renderHeader('', 'Lista de jogos', 'jogos, renpy, visual novel');
                 <a href="game.php?slug=<?= urlencode($g['slug']) ?>" style="text-decoration: none; color: inherit;">
                     <div class="card">
                         <div class="card-image">
-                            <img src="uploads/covers/<?= htmlspecialchars($g['cover_image']) ?>" 
-                                 alt="<?= htmlspecialchars($g['title']) ?>" 
-                                 loading="lazy">
+                            <?= renderImageTag('uploads/covers/' . $g['cover_image'], $g['title'], ['loading' => 'lazy']) ?>
                         </div>
                         
                         <div class="card-content">
