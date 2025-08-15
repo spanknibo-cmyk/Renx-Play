@@ -233,19 +233,23 @@ body {
 }
 
 .card-image {
-    position: relative;
-    width: 100%;
-    height: auto;
-    overflow: visible;
-    background: hsl(var(--muted));
+	position: relative;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	background: hsl(var(--muted));
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .card-image img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    transition: none;
-    display: block;
+	width: auto;
+	max-width: 100%;
+	height: 100%;
+	object-fit: contain;
+	transition: none;
+	display: block;
 }
 
 .card:hover .card-image img {
@@ -414,17 +418,23 @@ body {
 }
 
 .game-image {
-    width: 100%;
-    height: 360px;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+	width: 100%;
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 8px 24px rgba(0,0,0,.08);
+	background: hsl(var(--muted));
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .game-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+	width: auto;
+	max-width: 100%;
+	height: auto;
+	max-height: 70vh;
+	object-fit: contain;
+	display: block;
 }
 
 .game-info h1 {
@@ -490,7 +500,8 @@ body {
 .creator-links .btn { padding: .4rem .6rem; }
 
 @media (max-width: 768px) {
-    .game-image { height: 250px; }
+	.game-image { min-height: 200px; }
+	.game-image img { max-height: 50vh; }
 }
 
 /* Admin Dashboard */
@@ -682,8 +693,10 @@ body {
     }
     
     .game-image {
-        height: 250px;
+        min-height: 200px;
     }
+    
+    .game-image img { max-height: 50vh; }
     
     .download-buttons {
         flex-direction: column;
@@ -714,25 +727,25 @@ body {
 }
 
 @media (max-width: 480px) {
-    .container {
-        padding: 0 0.5rem;
-    }
-    
-    .games-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .card-image {
-        height: auto;
-    }
-    
-    .auth-card {
-        padding: 1rem;
-    }
-    
-    .admin-games-grid {
-        grid-template-columns: 1fr;
-    }
+	.container {
+		padding: 0 0.5rem;
+	}
+	
+	.games-grid {
+		grid-template-columns: 1fr;
+	}
+	
+	.card-image {
+		aspect-ratio: 16 / 9;
+	}
+	
+	.auth-card {
+		padding: 1rem;
+	}
+	
+	.admin-games-grid {
+		grid-template-columns: 1fr;
+	}
 }
 
 /* Dark mode toggle */
