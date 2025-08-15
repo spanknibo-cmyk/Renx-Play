@@ -212,8 +212,10 @@ function preview(inpId, outId, multi = false) {
                 r.onload = ev => {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'screenshot-thumb';
+                    const isSvg = f.type === 'image/svg+xml';
+                    const imgTag = `<img src='${ev.target.result}' alt='' />`;
                     wrapper.innerHTML = `
-                        <img src='${ev.target.result}' alt='' />
+                        ${imgTag}
                         <button type='button' class='remove-thumb' aria-label='Remover'>&times;</button>
                     `;
                     wrapper.querySelector('.remove-thumb').addEventListener('click', () => {
@@ -223,6 +225,7 @@ function preview(inpId, outId, multi = false) {
                     });
                     out.appendChild(wrapper);
                 };
+                // Use readAsDataURL for previews; works for avif/webp/svg/gif
                 r.readAsDataURL(f);
             });
             updateHidden();
@@ -230,7 +233,7 @@ function preview(inpId, outId, multi = false) {
     }
 }
 
-// Inicializar preview quando DOM carregar
+// Inicializar preview quando DOM carregar (mantém GIF animado e SVG vetorial no preview)
 document.addEventListener('DOMContentLoaded', () => {
     preview('coverInput', 'coverPreview');
     preview('screenshotsInput', 'screenshotsPreview', true);

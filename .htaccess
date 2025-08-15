@@ -1,0 +1,32 @@
+# Increase PHP upload limits for this app
+php_value upload_max_filesize 64M
+php_value post_max_size 72M
+php_value max_file_uploads 50
+php_value memory_limit 256M
+php_value max_input_time 300
+php_value max_execution_time 300
+
+# Allow handling of large requests behind proxies
+<IfModule mod_security.c>
+	SecFilterEngine Off
+	SecFilterScanPOST Off
+</IfModule>
+
+# Correct MIME types for modern images
+AddType image/avif .avif
+AddType image/webp .webp
+AddType image/svg+xml .svg
+
+# Cache images aggressively (override as needed)
+<IfModule mod_expires.c>
+	ExpiresActive On
+	ExpiresByType image/jpeg "access plus 1 year"
+	ExpiresByType image/png  "access plus 1 year"
+	ExpiresByType image/gif  "access plus 1 year"
+	ExpiresByType image/webp "access plus 1 year"
+	ExpiresByType image/avif "access plus 1 year"
+	ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
