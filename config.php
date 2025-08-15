@@ -13,7 +13,7 @@ define('SITE_NAME', 'Renxplay Teste');
 define('POSTS_PER_PAGE', 10);
 define('PAGINATION_RANGE', 2);
 define('MAX_UPLOAD_SIZE', 10485760);    // 10MB
-define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif']);
 // Configurações de segurança
 define('UPLOAD_PATH', __DIR__ . '/uploads/');
 define('MAX_SCREENSHOTS', 30);
@@ -125,17 +125,121 @@ function createUploadDirectory($dir) {
     return true;
 }
 
-function validateImage($tmpPath) {
+function validateImage($tmpPath, $ext = null) {
+    $ext = $ext ? strtolower($ext) : null;
+
+    // Primeiro, tentar detectar via finfo
+    $mime = null;
+    if (function_exists('finfo_open')) {
+        $fi = finfo_open(FILEINFO_MIME_TYPE);
+        if ($fi) {
+            $mime = finfo_file($fi, $tmpPath) ?: null;
+            finfo_close($fi);
+        }
+    }
+
+    // SVG: getimagesize não funciona; validar conteúdo básico e mime
+    if ($ext === 'svg' || $mime === 'image/svg+xml') {
+        $content = @file_get_contents($tmpPath);
+        if ($content === false) return false;
+        // Precisa ter uma tag <svg ...>
+        if (stripos($content, '<svg') === false) return false;
+        // Rejeitar SVGs com script/eventos embutidos por segurança básica
+        if (preg_match('/<script|onload\s*=|onerror\s*=/i', $content)) return false;
+        return true;
+    }
+
+    // AVIF: aceitar por mime/assinatura; getimagesize pode não suportar
+    if ($ext === 'avif' || $mime === 'image/avif') {
+        return true;
+    }
+
+    // Demais formatos raster
     $imageInfo = @getimagesize($tmpPath);
-    if (!$imageInfo) return false;
-    
-    // Verificar se é uma imagem real
+    if (!$imageInfo || empty($imageInfo['mime'])) return false;
     $allowedMimes = [
-        'image/jpeg', 'image/jpg', 'image/png', 
-        'image/gif', 'image/webp'
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'
     ];
-    
-    return in_array($imageInfo['mime'], $allowedMimes);
+    return in_array($imageInfo['mime'], $allowedMimes, true);
+}
+
+/**
+ * Gera fallback (WEBP ou PNG) para um arquivo AVIF caso a extensão/biblioteca suporte.
+ * Retorna caminho do fallback gerado ou null.
+ */
+function generateAvifFallback(string $avifPath, string $preferred = 'webp'): ?string {
+    $dir = dirname($avifPath) . '/';
+    $base = pathinfo($avifPath, PATHINFO_FILENAME);
+    $fallbackWebp = $dir . $base . '.webp';
+    $fallbackPng = $dir . $base . '.png';
+
+    // Se já existe, retorna imediatamente
+    if ($preferred === 'webp' && file_exists($fallbackWebp)) return $fallbackWebp;
+    if (file_exists($fallbackPng)) return $fallbackPng;
+
+    // Tentar com GD (PHP 8.1+ compilado com libavif)
+    if (function_exists('imagecreatefromavif')) {
+        $img = @imagecreatefromavif($avifPath);
+        if ($img) {
+            if ($preferred === 'webp' && function_exists('imagewebp')) {
+                if (@imagewebp($img, $fallbackWebp, 85)) { imagedestroy($img); return $fallbackWebp; }
+            }
+            if (@imagepng($img, $fallbackPng, 6)) { imagedestroy($img); return $fallbackPng; }
+            imagedestroy($img);
+        }
+    }
+
+    // Tentar com Imagick, se disponível
+    if (class_exists('Imagick')) {
+        try {
+            $im = new Imagick();
+            $im->readImage($avifPath);
+            if ($preferred === 'webp' && in_array('WEBP', $im->queryFormats('WEBP') ?: [], true)) {
+                $im->setImageFormat('webp');
+                $im->setImageCompressionQuality(85);
+                if ($im->writeImage($fallbackWebp)) { $im->clear(); $im->destroy(); return $fallbackWebp; }
+            }
+            $im->setImageFormat('png');
+            if ($im->writeImage($fallbackPng)) { $im->clear(); $im->destroy(); return $fallbackPng; }
+            $im->clear();
+            $im->destroy();
+        } catch (Throwable $e) {
+            // Ignorar erros silenciosamente; manter apenas o AVIF
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Helper para renderizar uma imagem com suporte a AVIF e fallback automático.
+ */
+function renderImageTag(string $src, string $alt = '', array $attrs = []): string {
+    $ext = strtolower(pathinfo($src, PATHINFO_EXTENSION));
+    $attrStr = '';
+    foreach ($attrs as $k => $v) {
+        if ($v === null || $v === '') continue;
+        $attrStr .= ' ' . htmlspecialchars($k, ENT_QUOTES, 'UTF-8') . "='" . htmlspecialchars($v, ENT_QUOTES, 'UTF-8') . "'";
+    }
+    $altEsc = htmlspecialchars($alt, ENT_QUOTES, 'UTF-8');
+
+    if ($ext === 'avif') {
+        $localPath = $src;
+        // Garantir caminho relativo do servidor para file_exists
+        if (strpos($localPath, '/') === 0) {
+            $fsPath = $_SERVER['DOCUMENT_ROOT'] . $localPath;
+        } else {
+            $fsPath = $localPath;
+        }
+        $fallback = preg_replace('/\.avif$/i', '.webp', $src);
+        $fallbackFs = preg_replace('/\.avif$/i', '.webp', $fsPath);
+        if (!file_exists($fallbackFs)) {
+            $fallback = preg_replace('/\.avif$/i', '.png', $src);
+        }
+        return "<picture><source type='image/avif' srcset='" . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . "'><img src='" . htmlspecialchars($fallback, ENT_QUOTES, 'UTF-8') . "' alt='{$altEsc}'{$attrStr}></picture>";
+    }
+
+    return "<img src='" . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . "' alt='{$altEsc}'{$attrStr}>";
 }
 
 function optimizeImage($source, $destination, $quality = 85) {
@@ -246,7 +350,7 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
     }
     
     // Validar se é imagem real
-    if (!validateImage($file['tmp_name'])) {
+    if (!validateImage($file['tmp_name'], $ext)) {
         error_log("ERRO: Arquivo não é uma imagem válida");
         return false;
     }
@@ -264,6 +368,17 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
             error_log("✅ Upload otimizado realizado: $newName");
             return $newName;
         }
+    }
+    // AVIF: mover e tentar gerar fallback
+    if ($ext === 'avif') {
+        if (move_uploaded_file($file['tmp_name'], $fullPath)) {
+            chmod($fullPath, 0644);
+            generateAvifFallback($fullPath, 'webp');
+            error_log("✅ Upload AVIF realizado com fallback (se possível): $newName");
+            return $newName;
+        }
+        error_log("❌ Falha no upload AVIF");
+        return false;
     }
     
     // Fallback: upload normal
@@ -544,22 +659,28 @@ function displayScreenshots($screenshots, $gameTitle = '', $gameId = '', $showTi
         $imagePath = "uploads/screenshots/" . $screenshot;
         $thumbnailPath = "uploads/screenshots/thumb_" . $screenshot;
         $alt = $gameTitle ? "$gameTitle - Screenshot " . ($index + 1) : "Screenshot " . ($index + 1);
-        
+
         // Usar thumbnail se existir
         $displayPath = file_exists($thumbnailPath) ? $thumbnailPath : $imagePath;
-        
-        $html .= "<div class='screenshot-item' data-index='{$index}' onclick='openModal(this.querySelector(\"img.screenshot\"), {$index})'>
-                    <img src='{$displayPath}' 
-                         data-full='{$imagePath}'
-                         alt='{$alt}' 
-                         class='screenshot' 
-                         loading='lazy'
-                         onload='this.classList.add(\"loaded\")'
-                         onerror='handleImageError(this)'>
-                    <div class='screenshot-overlay'>
-                        <i class='fas fa-search-plus'></i>
-                    </div>
-                  </div>";
+
+        $ext = strtolower(pathinfo($displayPath, PATHINFO_EXTENSION));
+        $fallback = '';
+        if ($ext === 'avif') {
+            $fallbackWebp = preg_replace('/\.avif$/i', '.webp', $displayPath);
+            $fallbackPng = preg_replace('/\.avif$/i', '.png', $displayPath);
+            $fallback = file_exists($fallbackWebp) ? $fallbackWebp : (file_exists($fallbackPng) ? $fallbackPng : $displayPath);
+        }
+
+        $innerImg = ($ext === 'avif')
+            ? "<picture><source type='image/avif' srcset='" . htmlspecialchars($displayPath, ENT_QUOTES, 'UTF-8') . "'>" .
+              "<img src='" . htmlspecialchars($fallback ?: $displayPath, ENT_QUOTES, 'UTF-8') . "' alt='" . htmlspecialchars($alt, ENT_QUOTES, 'UTF-8') . "' class='screenshot' loading='lazy' onload='this.classList.add(\"loaded\")' onerror='handleImageError(this)'></picture>"
+            : "<img src='" . htmlspecialchars($displayPath, ENT_QUOTES, 'UTF-8') . "' alt='" . htmlspecialchars($alt, ENT_QUOTES, 'UTF-8') . "' class='screenshot' loading='lazy' onload='this.classList.add(\"loaded\")' onerror='handleImageError(this)'>";
+
+        $html .= "<div class='screenshot-item' data-index='{$index}' onclick='openModal(this.querySelector(\"img.screenshot\"), {$index})'>" .
+                 // data-full mantém o original; adicionamos também data-fallback para o modal
+                 str_replace('<img ', "<img data-full='" . htmlspecialchars($imagePath, ENT_QUOTES, 'UTF-8') . "' data-fallback='" . htmlspecialchars($fallback ?: '', ENT_QUOTES, 'UTF-8') . "' ", $innerImg) .
+                 "<div class='screenshot-overlay'><i class='fas fa-search-plus'></i></div>" .
+                 "</div>";
     }
     
     $html .= "</div></div>";

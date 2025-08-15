@@ -330,9 +330,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php foreach ($games as $game): ?>
                         <div class="admin-card">
                             <div class="admin-card-image">
-                                <img src="uploads/covers/<?= htmlspecialchars($game['cover_image']) ?>" 
-                                     alt="<?= htmlspecialchars($game['title']) ?>"
-                                     loading="lazy">
+                                <?= renderImageTag('uploads/covers/' . $game['cover_image'], $game['title'], ['loading' => 'lazy']) ?>
                             </div>
                             
                             <div class="admin-card-content">
@@ -424,7 +422,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="form-group">
                             <label for="cover_image">Imagem URL *</label>
-                            <input type="file" id="coverInput" name="cover_image" accept="image/*" required>
+                            <input type="file" id="coverInput" name="cover_image" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif" required>
                             <div id="coverPreview" style="margin-top:.5rem"></div>
                         </div>
                         
@@ -474,7 +472,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="form-group">
                             <label>Imagens Extras (até 30)</label>
-                            <input id="screenshotsInput" type="file" name="screenshots[]" accept="image/*" multiple>
+                            <input id="screenshotsInput" type="file" name="screenshots[]" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif" multiple>
                             <div id="screenshotsPreview" style="margin-top:.5rem"></div>
                         </div>
 
@@ -597,7 +595,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         </div>
                         <div class="form-group"><label>Descrição</label><textarea name="description" rows="4"><?= htmlspecialchars($eg['description']) ?></textarea></div>
-                        <div class="form-group"><label>Capa</label><input id="editCoverInput" type="file" name="cover_image" accept="image/*"><div id="editCoverPreview" style="margin-top:.5rem"></div></div>
+                        <div class="form-group"><label>Capa</label><input id="editCoverInput" type="file" name="cover_image" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif"><div id="editCoverPreview" style="margin-top:.5rem"></div></div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                             <div class="form-group"><label>Versão</label><input type="text" name="version" value="<?= htmlspecialchars($eg['version']) ?>"></div>
                             <div class="form-group"><label>Idiomas</label>
@@ -633,7 +631,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="screenshot-gallery" style="margin-top:.5rem;">
                                 <?php foreach ($existing as $i => $sc): $path = 'uploads/screenshots/' . $sc; ?>
                                     <div class="screenshot-item" style="position:relative;">
-                                        <img class="screenshot" src="<?= $path ?>" alt="" />
+                                        <?= renderImageTag($path, '', ['class' => 'screenshot']) ?>
                                         <label style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;padding:.25rem .5rem;border-radius:6px;font-size:.75rem;">
                                             <input type="checkbox" name="remove_screenshots[]" value="<?= htmlspecialchars($sc) ?>"> remover
                                         </label>
@@ -643,7 +641,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <?php endif; ?>
 
-                        <div class="form-group"><label>Imagens extras (adicionar novas)</label><input id="editScreenshotsInput" type="file" name="screenshots[]" multiple accept="image/*"><div id="editScreenshotsPreview" style="margin-top:.5rem"></div></div>
+                        <div class="form-group"><label>Imagens extras (adicionar novas)</label><input id="editScreenshotsInput" type="file" name="screenshots[]" multiple accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif"><div id="editScreenshotsPreview" style="margin-top:.5rem"></div></div>
                         <div class="form-group" style="margin-top:.25rem">
                             <label style="display:flex;align-items:center;gap:.5rem;"><input type="checkbox" name="replace_all" value="1"> Substituir todas as imagens existentes por estas novas</label>
                         </div>

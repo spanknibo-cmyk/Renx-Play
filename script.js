@@ -249,13 +249,21 @@ function openModal(imgEl, index) {
 
     const gallery = imgEl.closest('.screenshot-gallery');
     if (gallery) {
-        currentGallery = Array.from(gallery.querySelectorAll('img.screenshot')).map(i => i.getAttribute('data-full') || i.src);
+        currentGallery = Array.from(gallery.querySelectorAll('img.screenshot')).map(i => ({
+            full: i.getAttribute('data-full') || i.src,
+            fallback: i.getAttribute('data-fallback') || ''
+        }));
     } else {
-        currentGallery = [imgEl.getAttribute('data-full') || imgEl.src];
+        currentGallery = [{
+            full: imgEl.getAttribute('data-full') || imgEl.src,
+            fallback: imgEl.getAttribute('data-fallback') || ''
+        }];
     }
     currentIndex = index || 0;
 
-    modalImg.src = currentGallery[currentIndex];
+    const current = currentGallery[currentIndex];
+    const isAvif = /\.avif($|\?)/i.test(current.full);
+    modalImg.src = isAvif && current.fallback ? current.fallback : current.full;
     modal.style.display = 'block';
 }
 
@@ -268,12 +276,20 @@ function nextImage() {
     if (!currentGallery.length) return;
     currentIndex = (currentIndex + 1) % currentGallery.length;
     const modalImg = document.getElementById('modalImage');
-    if (modalImg) modalImg.src = currentGallery[currentIndex];
+    if (modalImg) {
+        const item = currentGallery[currentIndex];
+        const isAvif = /\.avif($|\?)/i.test(item.full);
+        modalImg.src = isAvif && item.fallback ? item.fallback : item.full;
+    }
 }
 
 function previousImage() {
     if (!currentGallery.length) return;
     currentIndex = (currentIndex - 1 + currentGallery.length) % currentGallery.length;
     const modalImg = document.getElementById('modalImage');
-    if (modalImg) modalImg.src = currentGallery[currentIndex];
+    if (modalImg) {
+        const item = currentGallery[currentIndex];
+        const isAvif = /\.avif($|\?)/i.test(item.full);
+        modalImg.src = isAvif && item.fallback ? item.fallback : item.full;
+    }
 }
