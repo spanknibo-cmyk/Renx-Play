@@ -1,0 +1,29 @@
+# Security and performance
+Options -Indexes
+FileETag None
+<IfModule mod_headers.c>
+	Header unset ETag
+	Header set X-Content-Type-Options "nosniff"
+	Header set X-Frame-Options "DENY"
+	Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Increase upload limits for this application only
+<IfModule mod_php.c>
+	php_value upload_max_filesize 64M
+	php_value post_max_size 64M
+	php_value memory_limit 256M
+	php_value max_file_uploads 60
+	php_value max_input_time 300
+	php_value max_execution_time 300
+</IfModule>
+
+# Allow serving modern image types
+AddType image/avif .avif
+AddType image/webp .webp
+AddType image/svg+xml .svg
+
+# Compression
+<IfModule mod_deflate.c>
+	AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json image/svg+xml
+</IfModule>
