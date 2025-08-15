@@ -121,9 +121,34 @@ function createUploadDirectory($dir) {
             return false;
         }
         // Adicionar .htaccess para segurança
-        file_put_contents($dir . '.htaccess', "Options -Indexes\nDeny from all");
+        @file_put_contents($dir . '.htaccess', "Options -Indexes\nDeny from all");
     }
     return true;
+}
+
+function uploadErrorMessage(int $code): string {
+    switch ($code) {
+        case UPLOAD_ERR_INI_SIZE: return 'O arquivo excede o limite de upload_max_filesize do servidor';
+        case UPLOAD_ERR_FORM_SIZE: return 'O arquivo excede o limite MAX_FILE_SIZE do formulário';
+        case UPLOAD_ERR_PARTIAL: return 'Upload feito parcialmente';
+        case UPLOAD_ERR_NO_FILE: return 'Nenhum arquivo enviado';
+        case UPLOAD_ERR_NO_TMP_DIR: return 'Pasta temporária ausente no servidor';
+        case UPLOAD_ERR_CANT_WRITE: return 'Falha ao gravar o arquivo no disco';
+        case UPLOAD_ERR_EXTENSION: return 'Extensão PHP bloqueou o upload';
+        default: return 'Erro desconhecido de upload';
+    }
+}
+
+function addUploadError(string $message): void {
+    if (!isset($_SESSION['upload_errors'])) $_SESSION['upload_errors'] = [];
+    $_SESSION['upload_errors'][] = $message;
+}
+
+function pullUploadErrors(): string {
+    if (empty($_SESSION['upload_errors'])) return '';
+    $msg = implode("\n", $_SESSION['upload_errors']);
+    unset($_SESSION['upload_errors']);
+    return $msg;
 }
 
 function validateImage($tmpPath) {
@@ -220,11 +245,13 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
     error_log("=== UPLOAD INDIVIDUAL INICIADO ===");
     
     if (!$file || !isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
+        addUploadError('Falha no upload: ' . uploadErrorMessage((int)($file['error'] ?? -1)));
         error_log("ERRO: Arquivo inválido - error: " . ($file['error'] ?? 'indefinido'));
         return false;
     }
     
     if (!file_exists($file['tmp_name'])) {
+        addUploadError('Arquivo temporário não encontrado. Verifique permissões do servidor.');
         error_log("ERRO: Arquivo temporário não existe: " . $file['tmp_name']);
         return false;
     }
@@ -235,23 +262,27 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
     // Limite por tipo (GIF pode ser maior)
     $maxSizeAllowed = ($ext === 'gif') ? (defined('MAX_GIF_UPLOAD_SIZE') ? MAX_GIF_UPLOAD_SIZE : MAX_UPLOAD_SIZE) : MAX_UPLOAD_SIZE;
     if (($file['size'] ?? 0) > $maxSizeAllowed) {
+        addUploadError('Arquivo muito grande (' . formatBytes($file['size'] ?? 0) . '). Limite: ' . formatBytes($maxSizeAllowed));
         error_log("ERRO: Arquivo muito grande para {$ext}: " . formatBytes($file['size']) . " (limite: " . formatBytes($maxSizeAllowed) . ")");
         return false;
     }
     
     if (!createUploadDirectory($dir)) {
+        addUploadError('Não foi possível criar o diretório de upload.');
         error_log("ERRO: Não foi possível criar diretório: $dir");
         return false;
     }
     
     // Verificar extensão permitida
     if (!in_array($ext, ALLOWED_IMAGE_TYPES)) {
+        addUploadError('Extensão não permitida: ' . $ext);
         error_log("ERRO: Extensão não permitida: $ext");
         return false;
     }
     
     // Validar se é imagem real
     if (!validateImage($file['tmp_name'])) {
+        addUploadError('O arquivo enviado não é uma imagem válida.');
         error_log("ERRO: Arquivo não é uma imagem válida");
         return false;
     }
@@ -278,6 +309,7 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
         return $newName;
     }
     
+    addUploadError('Falha ao mover o arquivo enviado.');
     error_log("❌ Falha no upload do arquivo");
     return false;
 }
@@ -302,6 +334,7 @@ function uploadMultipleFiles($filesArray, $dir = 'uploads/screenshots/', $maxFil
         }
         
         if ($filesArray['error'][$i] !== UPLOAD_ERR_OK) {
+            addUploadError('Arquivo #' . ($i + 1) . ': ' . uploadErrorMessage((int)$filesArray['error'][$i]));
             error_log("Arquivo $i com erro: " . $filesArray['error'][$i]);
             continue;
         }

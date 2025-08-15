@@ -67,6 +67,9 @@ if ($action === 'create_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $screenshots = uploadMultipleFiles($_FILES['screenshots'], 'uploads/screenshots/', MAX_SCREENSHOTS);
     }
 
+    // Adicionar mensagens detalhadas de upload (se houver)
+    $uploadErrors = function_exists('pullUploadErrors') ? pullUploadErrors() : '';
+
     if (!$errors) {
         // Criar slug único
         $slugBase = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $_POST['title'])));
@@ -127,11 +130,13 @@ if ($action === 'create_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         $message = $result 
-            ? "<div class='alert alert-success'><i class='fas fa-check'></i> Jogo criado com sucesso!</div>"
+            ? "<div class='alert alert-success'><i class='fas fa-check'></i> Jogo criado com sucesso!" . ($uploadErrors ? ('<br>' . nl2br(htmlspecialchars($uploadErrors))) : '') . "</div>"
             : "<div class='alert alert-error'>Erro ao criar jogo.</div>";
         $action = 'home';
     } else {
-        $message = "<div class='alert alert-error'><i class='fas fa-times'></i> " . implode('<br>', $errors) . "</div>";
+        $msg = implode('<br>', $errors);
+        if ($uploadErrors) $msg .= '<br>' . nl2br(htmlspecialchars($uploadErrors));
+        $message = "<div class='alert alert-error'><i class='fas fa-times'></i> {$msg}</div>";
     }
 }
 
@@ -220,6 +225,8 @@ if ($action === 'update_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($ok) {
         $noticeText = $uploadNotices ? ('<br>' . implode('<br>', $uploadNotices)) : '';
+        $uploadErrors = function_exists('pullUploadErrors') ? pullUploadErrors() : '';
+        if ($uploadErrors) $noticeText .= '<br>' . nl2br(htmlspecialchars($uploadErrors));
         $message = "<div class='alert alert-success'><i class='fas fa-check'></i> Jogo atualizado!{$noticeText}</div>";
     } else {
         $message = "<div class='alert alert-error'>Erro ao atualizar</div>";
