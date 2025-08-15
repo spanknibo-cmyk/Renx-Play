@@ -987,3 +987,13 @@ body {
 /* Creator links alignment */
 .creator-links { display:flex; flex-wrap:wrap; gap:.5rem; }
 .creator-links .btn { border-color:hsl(var(--border)); }
+
+/* Profile page (profile.php) */
+.profile-container { display:flex; justify-content:center; padding: 2rem 1rem; }
+.profile-card { max-width: 720px; }
+.profile-card .auth-header h2 { font-size: 1.75rem; }
+.profile-card .form-group label { font-size: 1rem; }
+.profile-card .form-group input,
+.profile-card .form-group textarea,
+.profile-card .form-group select { font-size: 1rem; padding: 1rem; }
+.profile-card .btn { font-size: 1rem; padding: 0.75rem 1rem; }

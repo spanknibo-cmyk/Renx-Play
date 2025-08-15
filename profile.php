@@ -39,45 +39,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && validateCSRFToken($_POST['csrf_toke
 renderHeader('Meu perfil', 'Gerencie seus dados de usuário');
 ?>
 
-<div class="auth-card">
-    <div class="auth-header">
-        <h2><i class="fas fa-user-cog"></i> Meu perfil</h2>
+<div class="container profile-container">
+    <div class="auth-card profile-card">
+        <div class="auth-header">
+            <h2><i class="fas fa-user-cog"></i> Meu perfil</h2>
+        </div>
+
+        <div class="alert" style="display:flex;align-items:center;gap:.5rem;margin:0 0 1rem 0;color:hsl(var(--muted-foreground));">
+            <i class="fas fa-envelope"></i>
+            <span><?= htmlspecialchars($user['email'] ?? '') ?></span>
+            <span style="margin:0 .5rem;opacity:.5;">•</span>
+            <span class="role role-<?= htmlspecialchars($user['role']) ?>" style="font-weight:600;"><?= htmlspecialchars($user['role']) ?></span>
+        </div>
+
+        <?php if (!empty($errors)): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-times-circle"></i> <?= implode('<br>', $errors) ?>
+            </div>
+        <?php elseif (!empty($success)): ?>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <?= $success ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST">
+            <?= csrfField(); ?>
+            
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Nome de usuário</label>
+                <input type="text" name="username" value="<?= sanitize($user['username']); ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Nova senha <small>(opcional)</small></label>
+                <input type="password" name="password" placeholder="Deixe em branco para manter">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                <i class="fas fa-save"></i> Salvar alterações
+            </button>
+        </form>
     </div>
-
-    <div class="alert" style="display:flex;align-items:center;gap:.5rem;margin:0 0 1rem 0;color:hsl(var(--muted-foreground));">
-        <i class="fas fa-envelope"></i>
-        <span><?= htmlspecialchars($user['email'] ?? '') ?></span>
-        <span style="margin:0 .5rem;opacity:.5;">•</span>
-        <span class="role role-<?= htmlspecialchars($user['role']) ?>" style="font-weight:600;"><?= htmlspecialchars($user['role']) ?></span>
-    </div>
-
-    <?php if (!empty($errors)): ?>
-        <div class="alert alert-error">
-            <i class="fas fa-times-circle"></i> <?= implode('<br>', $errors) ?>
-        </div>
-    <?php elseif (!empty($success)): ?>
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle"></i> <?= $success ?>
-        </div>
-    <?php endif; ?>
-
-    <form method="POST">
-        <?= csrfField(); ?>
-        
-        <div class="form-group">
-            <label><i class="fas fa-user"></i> Nome de usuário</label>
-            <input type="text" name="username" value="<?= sanitize($user['username']); ?>" required>
-        </div>
-
-        <div class="form-group">
-            <label><i class="fas fa-lock"></i> Nova senha <small>(opcional)</small></label>
-            <input type="password" name="password" placeholder="Deixe em branco para manter">
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-full">
-            <i class="fas fa-save"></i> Salvar alterações
-        </button>
-    </form>
 </div>
 
 <?php renderFooter(); ?>
