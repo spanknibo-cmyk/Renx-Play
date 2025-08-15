@@ -545,8 +545,9 @@ function displayScreenshots($screenshots, $gameTitle = '', $gameId = '', $showTi
         $thumbnailPath = "uploads/screenshots/thumb_" . $screenshot;
         $alt = $gameTitle ? "$gameTitle - Screenshot " . ($index + 1) : "Screenshot " . ($index + 1);
         
-        // Usar thumbnail se existir
-        $displayPath = file_exists($thumbnailPath) ? $thumbnailPath : $imagePath;
+        // Usar thumbnail se existir, exceto para GIF (mantém animação)
+        $isGif = strtolower(pathinfo($screenshot, PATHINFO_EXTENSION)) === 'gif';
+        $displayPath = $isGif ? $imagePath : (file_exists($thumbnailPath) ? $thumbnailPath : $imagePath);
         
         $html .= "<div class='screenshot-item' data-index='{$index}' onclick='openModal(this.querySelector(\"img.screenshot\"), {$index})'>
                     <img src='{$displayPath}' 
