@@ -410,9 +410,21 @@ function renderImage(string $srcRelative, string $alt = '', string $class = '', 
 	$filename = pathinfo($srcRelative, PATHINFO_FILENAME);
 	$fallback = '';
 	if ($ext === 'avif') {
+		// Tenta gerar fallback
 		$fallbackName = ensureAvifFallback(__DIR__ . '/' . $srcRelative);
 		if ($fallbackName) {
 			$fallback = $basePath . '/' . $fallbackName;
+		} else {
+			// Mesmo que não seja possível gerar agora, procure por arquivos irmãos
+			$fullBaseDir = rtrim(__DIR__ . '/' . ($basePath === '.' ? '' : $basePath . '/'), '/');
+			$baseNoDir = $filename; // nome sem extensão
+			foreach (['webp','jpg','jpeg','png'] as $fb) {
+				$probe = $fullBaseDir . '/' . $baseNoDir . '.' . $fb;
+				if (file_exists($probe)) {
+					$fallback = ($basePath === '.' ? '' : $basePath . '/') . $baseNoDir . '.' . $fb;
+					break;
+				}
+			}
 		}
 	}
 	// SVG e GIF não devem usar picture para manter animação/vetor
