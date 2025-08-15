@@ -233,7 +233,7 @@ function preview(inpId, outId, multi = false) {
     }
 }
 
-// Inicializar preview quando DOM carregar
+// Inicializar preview quando DOM carregar (mantém GIF animado e SVG vetorial no preview)
 document.addEventListener('DOMContentLoaded', () => {
     preview('coverInput', 'coverPreview');
     preview('screenshotsInput', 'screenshotsPreview', true);

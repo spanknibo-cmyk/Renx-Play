@@ -422,7 +422,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="form-group">
                             <label for="cover_image">Imagem URL *</label>
-                            <input type="file" id="coverInput" name="cover_image" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,image/avif" required>
+                            <input type="file" id="coverInput" name="cover_image" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/svg+xml,image/avif" required>
                             <div id="coverPreview" style="margin-top:.5rem"></div>
                         </div>
                         
@@ -472,7 +472,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="form-group">
                             <label>Imagens Extras (até 30)</label>
-                            <input id="screenshotsInput" type="file" name="screenshots[]" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,image/avif" multiple>
+                            <input id="screenshotsInput" type="file" name="screenshots[]" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/svg+xml,image/avif" multiple>
                             <div id="screenshotsPreview" style="margin-top:.5rem"></div>
                         </div>
 
@@ -595,7 +595,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         </div>
                         <div class="form-group"><label>Descrição</label><textarea name="description" rows="4"><?= htmlspecialchars($eg['description']) ?></textarea></div>
-                        <div class="form-group"><label>Capa</label><input id="editCoverInput" type="file" name="cover_image" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,image/avif"><div id="editCoverPreview" style="margin-top:.5rem"></div></div>
+                        <div class="form-group"><label>Capa</label><input id="editCoverInput" type="file" name="cover_image" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/svg+xml,image/avif"><div id="editCoverPreview" style="margin-top:.5rem"></div></div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                             <div class="form-group"><label>Versão</label><input type="text" name="version" value="<?= htmlspecialchars($eg['version']) ?>"></div>
                             <div class="form-group"><label>Idiomas</label>
@@ -641,7 +641,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <?php endif; ?>
 
-                        <div class="form-group"><label>Imagens extras (adicionar novas)</label><input id="editScreenshotsInput" type="file" name="screenshots[]" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,image/avif"><div id="editScreenshotsPreview" style="margin-top:.5rem"></div></div>
+                        <div class="form-group"><label>Imagens extras (adicionar novas)</label><input id="editScreenshotsInput" type="file" name="screenshots[]" multiple accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/svg+xml,image/avif"><div id="editScreenshotsPreview" style="margin-top:.5rem"></div></div>
                         <div class="form-group" style="margin-top:.25rem">
                             <label style="display:flex;align-items:center;gap:.5rem;"><input type="checkbox" name="replace_all" value="1"> Substituir todas as imagens existentes por estas novas</label>
                         </div>

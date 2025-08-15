@@ -12,7 +12,7 @@ define('DB_PASS', 'zcbm');                   // senha vazia (se não tiver senha
 define('SITE_NAME', 'Renxplay Teste');  
 define('POSTS_PER_PAGE', 10);
 define('PAGINATION_RANGE', 2);
-define('MAX_UPLOAD_SIZE', 10485760);    // 10MB
+define('MAX_UPLOAD_SIZE', 67108864);    // 64MB (alinhado com .htaccess)
 define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif']);
 // Configurações de segurança
 define('UPLOAD_PATH', __DIR__ . '/uploads/');
@@ -349,7 +349,7 @@ function uploadMultipleFiles($filesArray, $dir = 'uploads/screenshots/', $maxFil
  * Gera um caminho de fallback (PNG ou WEBP) para arquivos AVIF, se disponível.
  * Não reprocessa se já existir o fallback.
  */
-function ensureAvifFallback(string $fullPath): ?string {
+function ensureAvifFallback(string $fullPath): ?string { // Gera WEBP/PNG para navegadores sem suporte a AVIF
 	$ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
 	if ($ext !== 'avif') return null;
 	if (!file_exists($fullPath)) return null;
@@ -395,7 +395,7 @@ function ensureAvifFallback(string $fullPath): ?string {
  * Renderiza um bloco <picture> com suporte a AVIF/WEBP/PNG/JPEG/SVG/GIF.
  * Mantém o arquivo original sem conversão estática.
  */
-function renderImage(string $srcRelative, string $alt = '', string $class = '', array $attrs = []): string {
+function renderImage(string $srcRelative, string $alt = '', string $class = '', array $attrs = []): string { // Exibe a imagem original com suporte a AVIF (fallback), WEBP, etc.
 	$src = $srcRelative;
 	$ext = strtolower(pathinfo($src, PATHINFO_EXTENSION));
 	$attrStr = '';
