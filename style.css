@@ -22,6 +22,8 @@
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
+    --cover-height-desktop: 360px;
+    --cover-height-mobile: 220px;
 }
 
 /* Light variants removed: only default light and .dark remain */
@@ -235,7 +237,7 @@ body {
 .card-image {
 	position: relative;
 	width: 100%;
-	aspect-ratio: 16 / 9;
+	min-height: var(--cover-height-desktop);
 	overflow: hidden;
 	border: 1px solid hsl(var(--border));
 	background: radial-gradient(120% 120% at 50% 40%, hsl(var(--muted)) 0%, hsl(var(--card)) 100%);
@@ -423,6 +425,7 @@ body {
 
 .game-image {
 	width: 100%;
+	min-height: var(--cover-height-desktop);
 	border-radius: 16px;
 	overflow: hidden;
 	box-shadow: 0 8px 24px rgba(0,0,0,.08);
@@ -508,7 +511,7 @@ body {
 .creator-links .btn { padding: .4rem .6rem; }
 
 @media (max-width: 768px) {
-	.game-image { min-height: 200px; }
+	.game-image { min-height: var(--cover-height-mobile); }
 	.game-image img { max-height: 50vh; }
 }
 
@@ -744,7 +747,7 @@ body {
 	}
 	
 	.card-image {
-		aspect-ratio: 16 / 9;
+		min-height: var(--cover-height-mobile);
 	}
 	
 	.auth-card {
