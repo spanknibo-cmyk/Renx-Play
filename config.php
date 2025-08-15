@@ -13,7 +13,7 @@ define('SITE_NAME', 'Renxplay Teste');
 define('POSTS_PER_PAGE', 10);
 define('PAGINATION_RANGE', 2);
 define('MAX_UPLOAD_SIZE', 10485760);    // 10MB
-define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif']);
 // Configurações de segurança
 define('UPLOAD_PATH', __DIR__ . '/uploads/');
 define('MAX_SCREENSHOTS', 30);
@@ -126,16 +126,30 @@ function createUploadDirectory($dir) {
 }
 
 function validateImage($tmpPath) {
+    // Primeiro tenta getimagesize para formatos bitmap
     $imageInfo = @getimagesize($tmpPath);
-    if (!$imageInfo) return false;
-    
-    // Verificar se é uma imagem real
-    $allowedMimes = [
-        'image/jpeg', 'image/jpg', 'image/png', 
-        'image/gif', 'image/webp'
-    ];
-    
-    return in_array($imageInfo['mime'], $allowedMimes);
+    if ($imageInfo && isset($imageInfo['mime'])) {
+        $allowedMimes = [
+            'image/jpeg', 'image/jpg', 'image/png',
+            'image/gif', 'image/webp', 'image/avif'
+        ];
+        if (in_array($imageInfo['mime'], $allowedMimes, true)) {
+            return true;
+        }
+    }
+    // Fallback: verificar SVG pelo conteúdo/MIME
+    if (function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $tmpPath);
+        finfo_close($finfo);
+        if ($mime === 'image/svg+xml') return true;
+    }
+    // Verificação leve: arquivo XML contendo <svg
+    $head = @file_get_contents($tmpPath, false, null, 0, 1024);
+    if ($head !== false && stripos($head, '<svg') !== false) {
+        return true;
+    }
+    return false;
 }
 
 function optimizeImage($source, $destination, $quality = 85) {
@@ -168,12 +182,18 @@ function optimizeImage($source, $destination, $quality = 85) {
             $srcImage = imagecreatefrompng($source);
             break;
         case IMAGETYPE_GIF:
-            $srcImage = imagecreatefromgif($source);
+            // Evitar quebrar animações: não reprocessar GIF animado
+            if (function_exists('imagecreatefromgif')) {
+                $srcImage = imagecreatefromgif($source);
+            } else {
+                return false;
+            }
             break;
         case IMAGETYPE_WEBP:
             $srcImage = imagecreatefromwebp($source);
             break;
         default:
+            // Para formatos como SVG e AVIF, não reprocessar aqui
             return false;
     }
     
@@ -215,7 +235,7 @@ function optimizeImage($source, $destination, $quality = 85) {
     return $result;
 }
 
-function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
+function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) { /* accepts jpg,jpeg,png,webp,gif,svg,avif */
     error_log("=== UPLOAD INDIVIDUAL INICIADO ===");
     
     if (!$file || !isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
@@ -258,6 +278,7 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
     error_log("Processando: " . $file['name'] . " -> " . $newName);
     
     // Otimizar e salvar
+    // Otimizar apenas formatos bitmap suportados pela GD sem animação
     if ($optimize && in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
         if (optimizeImage($file['tmp_name'], $fullPath)) {
             chmod($fullPath, 0644);
@@ -269,6 +290,10 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
     // Fallback: upload normal
     if (move_uploaded_file($file['tmp_name'], $fullPath)) {
         chmod($fullPath, 0644);
+        // Se for AVIF, tenta gerar fallback automáticamente
+        if ($ext === 'avif') {
+            ensureAvifFallback($fullPath);
+        }
         error_log("✅ Upload realizado: $newName");
         return $newName;
     }
@@ -278,46 +303,138 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
 }
 
 function uploadMultipleFiles($filesArray, $dir = 'uploads/screenshots/', $maxFiles = MAX_SCREENSHOTS) {
-    $uploaded = [];
-    error_log("=== UPLOAD MÚLTIPLO INICIADO ===");
-    
-    if (!isset($filesArray['name']) || !is_array($filesArray['name'])) {
-        error_log("ERRO: Array de arquivos inválido");
-        return $uploaded;
-    }
-    
-    $fileCount = count($filesArray['name']);
-    $processCount = min($fileCount, $maxFiles);
-    
-    error_log("Processando $processCount arquivos de $fileCount enviados");
-    
-    for ($i = 0; $i < $processCount; $i++) {
-        if (empty($filesArray['name'][$i]) || $filesArray['error'][$i] === UPLOAD_ERR_NO_FILE) {
-            continue;
-        }
-        
-        if ($filesArray['error'][$i] !== UPLOAD_ERR_OK) {
-            error_log("Arquivo $i com erro: " . $filesArray['error'][$i]);
-            continue;
-        }
-        
-        $file = [
-            'name' => $filesArray['name'][$i],
-            'type' => $filesArray['type'][$i] ?? '',
-            'tmp_name' => $filesArray['tmp_name'][$i],
-            'error' => $filesArray['error'][$i],
-            'size' => $filesArray['size'][$i] ?? 0
-        ];
-        
-        $filename = uploadFile($file, $dir, true);
-        if ($filename) {
-            $uploaded[] = $filename;
-            error_log("✅ Screenshot $i uploaded: $filename");
-        }
-    }
-    
-    error_log("Total de arquivos processados: " . count($uploaded));
-    return $uploaded;
+	$uploaded = [];
+	error_log("=== UPLOAD MÚLTIPLO INICIADO ===");
+	
+	if (!isset($filesArray['name']) || !is_array($filesArray['name'])) {
+		error_log("ERRO: Array de arquivos inválido");
+		return $uploaded;
+	}
+	
+	$fileCount = count($filesArray['name']);
+	$processCount = min($fileCount, $maxFiles);
+	
+	error_log("Processando $processCount arquivos de $fileCount enviados");
+	
+	for ($i = 0; $i < $processCount; $i++) {
+		if (empty($filesArray['name'][$i]) || $filesArray['error'][$i] === UPLOAD_ERR_NO_FILE) {
+			continue;
+		}
+		
+		if ($filesArray['error'][$i] !== UPLOAD_ERR_OK) {
+			error_log("Arquivo $i com erro: " . $filesArray['error'][$i]);
+			continue;
+		}
+		
+		$file = [
+			'name' => $filesArray['name'][$i],
+			'type' => $filesArray['type'][$i] ?? '',
+			'tmp_name' => $filesArray['tmp_name'][$i],
+			'error' => $filesArray['error'][$i],
+			'size' => $filesArray['size'][$i] ?? 0
+		];
+		
+		$filename = uploadFile($file, $dir, true);
+		if ($filename) {
+			$uploaded[] = $filename;
+			error_log("✅ Screenshot $i uploaded: $filename");
+		}
+	}
+	
+	error_log("Total de arquivos processados: " . count($uploaded));
+	return $uploaded;
+}
+
+/**
+ * Gera um caminho de fallback (PNG ou WEBP) para arquivos AVIF, se disponível.
+ * Não reprocessa se já existir o fallback.
+ */
+function ensureAvifFallback(string $fullPath): ?string {
+	$ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+	if ($ext !== 'avif') return null;
+	if (!file_exists($fullPath)) return null;
+	$dir = dirname($fullPath);
+	$base = pathinfo($fullPath, PATHINFO_FILENAME);
+	$fallbackWebp = $dir . '/' . $base . '.webp';
+	$fallbackPng = $dir . '/' . $base . '.png';
+	// Se já existir algum, retorna o existente
+	if (file_exists($fallbackWebp)) return basename($fallbackWebp);
+	if (file_exists($fallbackPng)) return basename($fallbackPng);
+	// Tenta converter via Imagick se disponível
+	try {
+		if (class_exists('Imagick')) {
+			$img = new Imagick();
+			$img->readImage($fullPath);
+			$img->setImageFormat('webp');
+			$img->setImageCompressionQuality(85);
+			$img->writeImage($fallbackWebp);
+			$img->clear();
+			$img->destroy();
+			return basename($fallbackWebp);
+		}
+	} catch (Throwable $e) {
+		error_log('Falha ao gerar fallback WEBP para AVIF: ' . $e->getMessage());
+	}
+	// Tenta GD caso suporte avif->png (nem sempre disponível)
+	try {
+		if (function_exists('imagecreatefromavif') && function_exists('imagepng')) {
+			$src = @imagecreatefromavif($fullPath);
+			if ($src) {
+				imagepng($src, $fallbackPng);
+				imagedestroy($src);
+				return basename($fallbackPng);
+			}
+		}
+	} catch (Throwable $e) {
+		error_log('Falha ao gerar fallback PNG para AVIF: ' . $e->getMessage());
+	}
+	return null;
+}
+
+/**
+ * Renderiza um bloco <picture> com suporte a AVIF/WEBP/PNG/JPEG/SVG/GIF.
+ * Mantém o arquivo original sem conversão estática.
+ */
+function renderImage(string $srcRelative, string $alt = '', string $class = '', array $attrs = []): string {
+	$src = $srcRelative;
+	$ext = strtolower(pathinfo($src, PATHINFO_EXTENSION));
+	$attrStr = '';
+	foreach ($attrs as $k => $v) {
+		$k = htmlspecialchars($k, ENT_QUOTES, 'UTF-8');
+		$v = htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
+		$attrStr .= " $k=\"$v\"";
+	}
+	$altEsc = htmlspecialchars($alt, ENT_QUOTES, 'UTF-8');
+	$classEsc = htmlspecialchars($class, ENT_QUOTES, 'UTF-8');
+	$basePath = dirname($srcRelative);
+	$filename = pathinfo($srcRelative, PATHINFO_FILENAME);
+	$fallback = '';
+	if ($ext === 'avif') {
+		$fallbackName = ensureAvifFallback(__DIR__ . '/' . $srcRelative);
+		if ($fallbackName) {
+			$fallback = $basePath . '/' . $fallbackName;
+		}
+	}
+	// SVG e GIF não devem usar picture para manter animação/vetor
+	if (in_array($ext, ['svg', 'gif'])) {
+		return "<img src=\"{$src}\" alt=\"{$altEsc}\" class=\"{$classEsc}\"{$attrStr}>";
+	}
+	// Construir picture para AVIF/WEBP/JPEG/PNG
+	$picture = '<picture>';
+	if ($ext === 'avif') {
+		$picture .= "<source srcset=\"{$src}\" type=\"image/avif\">";
+		if ($fallback) {
+			$fbExt = strtolower(pathinfo($fallback, PATHINFO_EXTENSION));
+			$picture .= "<source srcset=\"{$fallback}\" type=\"image/{$fbExt}\">";
+		}
+	}
+	if ($ext === 'webp') {
+		$picture .= "<source srcset=\"{$src}\" type=\"image/webp\">";
+	}
+	// Img final com src original para browsers sem suporte a <source>
+	$picture .= "<img src=\"{$src}\" alt=\"{$altEsc}\" class=\"{$classEsc}\"{$attrStr}>";
+	$picture .= '</picture>';
+	return $picture;
 }
 
 // ====== FUNÇÕES UTILITÁRIAS ======
@@ -529,41 +646,26 @@ function renderFooter() {
 
 // ====== FUNÇÕES DE EXIBIÇÃO APRIMORADAS ======
 function displayScreenshots($screenshots, $gameTitle = '', $gameId = '', $showTitle = false) {
-    if (empty($screenshots)) return '';
-    
-    $screenshots = is_string($screenshots) ? json_decode($screenshots, true) : $screenshots;
-    if (empty($screenshots) || !is_array($screenshots)) return '';
-    
-    $html = "<div class='screenshots'>";
-    if ($showTitle) {
-        $html .= "<h3><i class='fas fa-images'></i> Screenshots <span class='count'>(" . count($screenshots) . ")</span></h3>";
-    }
-    $html .= "<div class='screenshot-gallery' data-game-id='{$gameId}'>";
-    
-    foreach ($screenshots as $index => $screenshot) {
-        $imagePath = "uploads/screenshots/" . $screenshot;
-        $thumbnailPath = "uploads/screenshots/thumb_" . $screenshot;
-        $alt = $gameTitle ? "$gameTitle - Screenshot " . ($index + 1) : "Screenshot " . ($index + 1);
-        
-        // Usar thumbnail se existir
-        $displayPath = file_exists($thumbnailPath) ? $thumbnailPath : $imagePath;
-        
-        $html .= "<div class='screenshot-item' data-index='{$index}' onclick='openModal(this.querySelector(\"img.screenshot\"), {$index})'>
-                    <img src='{$displayPath}' 
-                         data-full='{$imagePath}'
-                         alt='{$alt}' 
-                         class='screenshot' 
-                         loading='lazy'
-                         onload='this.classList.add(\"loaded\")'
-                         onerror='handleImageError(this)'>
-                    <div class='screenshot-overlay'>
-                        <i class='fas fa-search-plus'></i>
-                    </div>
-                  </div>";
-    }
-    
-    $html .= "</div></div>";
-    return $html;
+	if (empty($screenshots)) return '';
+	
+	$screenshots = is_string($screenshots) ? json_decode($screenshots, true) : $screenshots;
+	if (empty($screenshots) || !is_array($screenshots)) return '';
+	
+	$html = "<div class='screenshots'>";
+	if ($showTitle) {
+		$html .= "<h3><i class='fas fa-images'></i> Screenshots <span class='count>(" . count($screenshots) . ")</span></h3>";
+	}
+	$html .= "<div class='screenshot-gallery' data-game-id='{$gameId}'>";
+	
+	foreach ($screenshots as $index => $screenshot) {
+		$imagePath = "uploads/screenshots/" . $screenshot;
+		$alt = $gameTitle ? "$gameTitle - Screenshot " . ($index + 1) : "Screenshot " . ($index + 1);
+		$rendered = renderImage($imagePath, $alt, 'screenshot', [ 'loading' => 'lazy', 'onload' => 'this.classList.add(\'loaded\')', 'onerror' => 'handleImageError(this)' ]);
+		$html .= "<div class='screenshot-item' data-index='{$index}' onclick='openModal(this.querySelector(\"img.screenshot\"), {$index})'>{$rendered}<div class='screenshot-overlay'><i class='fas fa-search-plus'></i></div></div>";
+	}
+	
+	$html .= "</div></div>";
+	return $html;
 }
 
 function displayDownloadLinks($downloadLinks, $requiresLogin = true) {
