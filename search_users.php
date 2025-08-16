@@ -50,5 +50,11 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 
 header('Content-Type: application/json; charset=utf-8');
-echo json_encode($stmt->fetchAll());
+$rows = $stmt->fetchAll();
+foreach ($rows as &$r) {
+    $r['username'] = htmlspecialchars($r['username'], ENT_QUOTES, 'UTF-8');
+    $r['email'] = htmlspecialchars($r['email'], ENT_QUOTES, 'UTF-8');
+}
+unset($r);
+echo json_encode($rows);
 ?>

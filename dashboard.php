@@ -32,6 +32,12 @@ function canManageGame(int $ownerId, PDO $pdo): bool {
 }
 
 $action = $_POST['action'] ?? $_GET['action'] ?? 'home';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        http_response_code(403);
+        die('CSRF inválido.');
+    }
+}
 $message = '';
 
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -363,6 +369,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </a>
                                 
                                 <form method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este jogo?')">
+                                    <?= csrfField(); ?>
                                     <input type="hidden" name="action" value="delete_game">
                                     <input type="hidden" name="game_id" value="<?= $game['id'] ?>">
                                     <button type="submit" class="btn btn-sm" style="background: hsl(0 84% 60%); color: white; border-color: hsl(0 84% 60%);">
@@ -394,6 +401,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     </h2>
                     
                     <form method="POST" enctype="multipart/form-data">
+                        <?= csrfField(); ?>
                         <input type="hidden" name="action" value="create_game">
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -581,6 +589,7 @@ if ($action === 'delete_game' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card-content">
                     <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-edit"></i> Editar Jogo</h2>
                     <form method="POST" enctype="multipart/form-data">
+                        <?= csrfField(); ?>
                         <input type="hidden" name="action" value="update_game">
                         <input type="hidden" name="game_id" value="<?= $eg['id'] ?>">
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">

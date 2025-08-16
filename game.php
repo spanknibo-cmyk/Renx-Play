@@ -30,6 +30,8 @@ $gameId = (int)$game['id'];
 $postOwner = (int)$game['posted_by'];
 
 if (isLoggedIn() && isset($_POST['action'])) {
+    enforceRateLimit('comment', 10, 60);
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) { http_response_code(403); die('CSRF inválido.'); }
     $gameIdPost = (int)($_POST['game_id'] ?? 0);
     if ($gameIdPost < 1) {
         header('Location: index.php');
@@ -76,8 +78,11 @@ if (isLoggedIn() && isset($_POST['action'])) {
 }
 
 if (isset($_GET['download']) && isLoggedIn()) {
-    $pdo->prepare("UPDATE games SET downloads_count = downloads_count + 1 WHERE id = ?")
-        ->execute([ $_GET['download'] ]);
+    $id = (int)$_GET['download'];
+    if ($id > 0) {
+        $pdo->prepare("UPDATE games SET downloads_count = downloads_count + 1 WHERE id = ?")
+            ->execute([ $id ]);
+    }
     echo "<script>window.close();</script>";
     exit;
 }
