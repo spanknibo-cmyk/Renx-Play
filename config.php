@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/security.php';
 
 date_default_timezone_set('America/Sao_Paulo'); // ou outro fuso que desejar
 
@@ -8,23 +8,19 @@ date_default_timezone_set('America/Sao_Paulo'); // ou outro fuso que desejar
 define('DB_HOST', '127.0.0.1');
 define('DB_NAME', 'u111823599_RenxplayGames');     // banco de dados local de teste
 define('DB_USER', 'csmods'); // usuário criado para conexão local
-define('DB_PASS', 'zcbm');                   // senha vazia (se não tiver senha local)
+define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : 'zcbm');                   // use variável de ambiente em produção
 define('SITE_NAME', 'Renxplay Teste');  
 define('POSTS_PER_PAGE', 10);
 define('PAGINATION_RANGE', 2);
 define('MAX_UPLOAD_SIZE', 10485760);    // 10MB
-define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif']);
+define('ALLOWED_IMAGE_TYPES', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif']); // Valide com finfo/getimagesize em runtime
 // Configurações de segurança
 define('UPLOAD_PATH', __DIR__ . '/uploads/');
 define('MAX_SCREENSHOTS', 30);
 define('MIN_PASSWORD_LENGTH', 6);
 
 
-// Headers de segurança
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-header('X-XSS-Protection: 1; mode=block');
-
+// Headers de segurança são aplicados por security.php
 // Conexão PDO com pool de conexões
 try {
     $pdo = new PDO(
@@ -84,7 +80,7 @@ function isLoggedIn() {
 
 function requireLogin() { 
     if (!isLoggedIn()) { 
-        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+        $_SESSION['redirect_after_login'] = strtok($_SERVER['REQUEST_URI'], "\r\n");
         header('Location: auth.php'); 
         exit; 
     } 
@@ -101,17 +97,7 @@ function requireRole($roles) {
     } 
 }
 
-function generateCSRFToken() {
-    if (!isset($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
-    return $_SESSION['csrf_token'];
-}
-
-function validateCSRFToken($token) {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
-}
-
+// CSRF helpers definidos em security.php para centralização
 // ====== FUNÇÕES DE UPLOAD APRIMORADAS ======
 function createUploadDirectory($dir) {
     if (!file_exists($dir)) {
@@ -119,8 +105,20 @@ function createUploadDirectory($dir) {
             error_log("Erro ao criar diretório: $dir");
             return false;
         }
-        // Adicionar .htaccess para segurança
-        file_put_contents($dir . '.htaccess', "Options -Indexes\nDeny from all");
+        		// Adicionar .htaccess para segurança: bloquear execução de scripts, permitir imagens
+		$ht = "Options -Indexes\n" .
+			"<IfModule mod_php.c>\n" .
+			"\tphp_flag engine off\n" .
+			"</IfModule>\n" .
+			"<FilesMatch \\\"\\\\.(php|phtml|php5|phar|phps|shtml|cgi|pl|sh|py|rb|ini|htaccess)$\\\\\">\n" .
+			"\tOrder Deny,Allow\n" .
+			"\tDeny from all\n" .
+			"</FilesMatch>\n" .
+			"<IfModule mod_mime.c>\n" .
+			"\tRemoveHandler .php .phtml .php5 .phar .phps\n" .
+			"\tAddType text/plain .php .phtml .php5 .phar .phps\n" .
+			"</IfModule>\n";
+		@file_put_contents($dir . '.htaccess', $ht);
     }
     return true;
 }
@@ -320,6 +318,8 @@ function optimizeImage($source, $destination, $quality = 85) {
 }
 
 function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
+    // Evitar path traversal
+    $dir = rtrim(str_replace(['..', "\0"], '', $dir), '/') . '/';
     error_log("=== UPLOAD INDIVIDUAL INICIADO ===");
     
     if (!$file || !isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
@@ -393,6 +393,8 @@ function uploadFile($file, $dir = 'uploads/covers/', $optimize = true) {
 }
 
 function uploadMultipleFiles($filesArray, $dir = 'uploads/screenshots/', $maxFiles = MAX_SCREENSHOTS) {
+    // Evitar path traversal
+    $dir = rtrim(str_replace(['..', "\0"], '', $dir), '/') . '/';
     $uploaded = [];
     error_log("=== UPLOAD MÚLTIPLO INICIADO ===");
     
@@ -489,6 +491,8 @@ function validateURL($url) {
 
 // ====== HEADER MELHORADO ======
 function renderHeader($title = '', $description = '', $keywords = '') {
+    // Anti-clickjacking redundante com header X-Frame-Options/CSP
+    header_remove('X-Powered-By');
     $pageTitle = $title ? $title . ' - ' . SITE_NAME : SITE_NAME . ' - Jogos Adultos';
     $pageDescription = $description ?: 'Renxplay - A melhor plataforma de jogos adultos';
     $currentPage = basename($_SERVER['PHP_SELF']);

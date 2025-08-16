@@ -6,13 +6,14 @@ $message = '';
 
 // LOGOUT
 if ($action === 'logout') {
-    session_destroy();
+    secureLogout();
     header('Location: index.php');
     exit;
 }
 
 // PROCESSAR LOGIN
 if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    enforceRateLimit('login', 10, 60);
     $username = trim($_POST['username']);
     $password = $_POST['password'];
     
@@ -21,8 +22,12 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch();
     
     if ($user && password_verify($password, $user['password'])) {
+        @session_regenerate_id(true);
         $_SESSION['user'] = $user;
-        header('Location: ' . ($_GET['redirect'] ?? 'index.php'));
+        $redir = $_GET['redirect'] ?? 'index.php';
+        // Evitar open redirect
+        if (strpos($redir, '://') !== false || strpos($redir, "\n") !== false) { $redir = 'index.php'; }
+        header('Location: ' . $redir);
         exit;
     } else {
         $message = "<div class='alert alert-error'><i class='fas fa-exclamation-triangle'></i> Credenciais inválidas!</div>";
@@ -94,7 +99,8 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             <?= $message ?>
             
             <?php if ($action === 'login'): ?>
-                <form method="POST" class="auth-form">
+                <form method="POST" class="auth-form" autocomplete="off" novalidate>
+                    <?= csrfField(); ?>
                     <input type="hidden" name="action" value="login">
                     
                     <div class="form-group">
@@ -119,7 +125,8 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     </button>
                 </form>
             <?php else: ?>
-                <form method="POST" class="auth-form">
+                <form method="POST" class="auth-form" autocomplete="off" novalidate>
+                    <?= csrfField(); ?>
                     <input type="hidden" name="action" value="register">
                     
                     <div class="form-group">

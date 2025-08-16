@@ -11,6 +11,8 @@ if ($gameSlug) {
 }
 
 renderHeader('', 'Lista de jogos', 'jogos, renpy, visual novel');
+// Evitar PR-Dangling-Markup com CSP/headers
+header_remove('X-Powered-By');
 ?>
 
 <!-- Seção de busca -->
@@ -130,12 +132,16 @@ renderHeader('', 'Lista de jogos', 'jogos, renpy, visual novel');
         if (games.length === 0) {
           results.innerHTML = '<div style="padding: 1rem; color: hsl(var(--muted-foreground));">Nenhum jogo encontrado</div>';
         } else {
-          results.innerHTML = games.map(game => 
-            `<a href="game.php?slug=${game.slug}" style="display: block; padding: 0.75rem 1rem; text-decoration: none; color: hsl(var(--foreground)); border-bottom: 1px solid hsl(var(--border)); transition: background 0.2s;" onmouseover="this.style.background='hsl(var(--accent))'" onmouseout="this.style.background='transparent'">
-                <strong>${game.title}</strong><br>
-                <small style="color: hsl(var(--muted-foreground));">${game.category || 'Visual Novel'} • ${game.downloads_count || 0} downloads</small>
-            </a>`
-          ).join('');
+          results.innerHTML = games.map(game => {
+            const title = String(game.title || '').replace(/[&<>"]+/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+            const slug = String(game.slug || '').replace(/[^a-zA-Z0-9-_]/g, '');
+            const category = String(game.category || 'Visual Novel').replace(/[&<>"']+/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s]));
+            const downloads = Number(game.downloads_count || 0);
+            return `<a href="game.php?slug=${slug}" style="display: block; padding: 0.75rem 1rem; text-decoration: none; color: hsl(var(--foreground)); border-bottom: 1px solid hsl(var(--border)); transition: background 0.2s;" onmouseover="this.style.background='hsl(var(--accent))'" onmouseout="this.style.background='transparent'">
+                <strong>${title}</strong><br>
+                <small style="color: hsl(var(--muted-foreground));">${category} • ${downloads} downloads</small>
+            </a>`;
+          }).join('');
         }
         results.style.display = 'block';
       })
