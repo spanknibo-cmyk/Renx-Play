@@ -42,21 +42,24 @@ $csp = [
 	"media-src 'self'",
 ];
 
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-header('Referrer-Policy: no-referrer');
-header('Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(self), publickey-credentials-get=(), sync-xhr=(), usb=(), wake-lock=(), xr-spatial-tracking=()');
-header('X-Permitted-Cross-Domain-Policies: none');
-header('X-Download-Options: noopen');
-header('Cross-Origin-Resource-Policy: same-origin');
-header('Cross-Origin-Opener-Policy: same-origin');
+if (!headers_sent()) {
+	header('X-Content-Type-Options: nosniff');
+	header('X-Frame-Options: DENY');
+	header('Referrer-Policy: no-referrer');
+	header('Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(self), publickey-credentials-get=(), sync-xhr=(), usb=(), wake-lock=(), xr-spatial-tracking=()');
+	header('X-Permitted-Cross-Domain-Policies: none');
+	header('X-Download-Options: noopen');
+	header('Cross-Origin-Resource-Policy: same-origin');
+	header('Cross-Origin-Opener-Policy: same-origin');
+}
+
 // Evitar duplicidade de CSP se o servidor já injeta via .htaccess
 if (!headers_sent()) {
 	header('Content-Security-Policy: ' . implode('; ', $csp));
 }
 
 // HSTS apenas em HTTPS (e após validar que o site usa TLS)
-if ($scheme === 'https') {
+if ($scheme === 'https' && !headers_sent()) {
 	header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
 }
 
@@ -118,7 +121,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 		$token = $_POST['csrf_token'];
 	}
 	if ($token !== null && !validateCSRFToken($token)) {
-		http_response_code(403);
+		if (!headers_sent()) { http_response_code(403); }
 		die('Falha de validação CSRF. Recarregue a página e tente novamente.');
 	}
 }
@@ -158,8 +161,10 @@ if (!function_exists('enforceRateLimit')) {
 		}
 		$bucket['count']++;
 		if ($bucket['count'] > $maxRequests) {
-			http_response_code(429);
-			header('Retry-After: ' . max(1, $windowSeconds - ($now - $bucket['start'])));
+			if (!headers_sent()) {
+				http_response_code(429);
+				header('Retry-After: ' . max(1, $windowSeconds - ($now - $bucket['start'])));
+			}
 			die('Muitas requisições. Tente novamente mais tarde.');
 		}
 	}
@@ -171,7 +176,7 @@ $maxPostSizeBytes = 30 * 1024 * 1024; // 30 MB hard cap
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 	$cl = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
 	if ($cl > 0 && $cl > $maxPostSizeBytes) {
-		http_response_code(413);
+		if (!headers_sent()) { http_response_code(413); }
 		die('Payload muito grande.');
 	}
 }
@@ -180,7 +185,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 if (!empty($_SERVER['QUERY_STRING'])) {
 	$q = $_SERVER['QUERY_STRING'];
 	if (strpos($q, "..") !== false || strpos($q, "%00") !== false) {
-		http_response_code(400);
+		if (!headers_sent()) { http_response_code(400); }
 		die('Requisição inválida.');
 	}
 }
@@ -206,14 +211,14 @@ if (!function_exists('e')) {
 // ===== 10) Handler global de exceções/erros =====
 set_exception_handler(function ($e) {
 	error_log('Uncaught exception: ' . $e->getMessage());
-	http_response_code(500);
+	if (!headers_sent()) { http_response_code(500); }
 	die('Erro interno.');
 });
 
 set_error_handler(function ($severity, $message, $file, $line) {
 	if (!(error_reporting() & $severity)) { return false; }
 	error_log("PHP error [$severity] $message in $file:$line");
-	http_response_code(500);
+	if (!headers_sent()) { http_response_code(500); }
 	die('Erro interno.');
 });
 
@@ -221,7 +226,7 @@ register_shutdown_function(function () {
 	$err = error_get_last();
 	if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
 		error_log('Fatal error: ' . print_r($err, true));
-		http_response_code(500);
+		if (!headers_sent()) { http_response_code(500); }
 		echo 'Erro interno.';
 	}
 });

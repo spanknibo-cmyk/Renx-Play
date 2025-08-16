@@ -11,8 +11,6 @@ if ($gameSlug) {
 }
 
 renderHeader('', 'Lista de jogos', 'jogos, renpy, visual novel');
-// Evitar PR-Dangling-Markup com CSP/headers
-header_remove('X-Powered-By');
 ?>
 
 <!-- Seção de busca -->
