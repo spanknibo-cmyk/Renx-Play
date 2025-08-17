@@ -103,6 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         }
 
+        function mapRole(code) {
+            const map = { DEV: 'Desenvolvedor', SUPER_ADMIN: 'Super Admin', ADMIN: 'Administrador', USER: 'Usuário' };
+            return map[code] || code;
+        }
+
         function renderList(users) {
             if (!users.length) {
                 results.innerHTML = '<div class="nores">Nenhum usuário encontrado</div>';
@@ -111,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <a href="?action=users&search=${encodeURIComponent(u.username)}" class="res-item">
                         <strong>${u.username}</strong> 
                         <small>${u.email}</small> 
-                        <span class="role role-${u.role}">${u.role}</span>
+                        <span class="role role-${u.role}">${mapRole(u.role)}</span>
                     </a>`).join('');
             }
             results.style.display = 'block';

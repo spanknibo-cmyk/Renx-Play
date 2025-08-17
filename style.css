@@ -159,7 +159,7 @@ body {
     font-size: 0.75rem;
 }
 
-/* Search */
+/* Busca */
 .search-section {
     padding: 1rem 0;
     background: hsl(var(--background));
@@ -493,7 +493,7 @@ body {
     .game-image { height: 250px; }
 }
 
-/* Admin Dashboard */
+/* Painel Administrativo */
 .admin-header {
     display: flex;
     align-items: center;
@@ -932,7 +932,7 @@ body {
     .footer .container { padding: 1.5rem 1rem; }
 }
 
-/* Screenshots gallery */
+/* Galeria de capturas de tela */
 .screenshots { margin: 1rem 0; }
 .screenshots h3 { margin-bottom: 0.5rem; }
 .screenshot-gallery {
