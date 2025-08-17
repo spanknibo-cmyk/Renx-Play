@@ -79,16 +79,7 @@ if ($step === 3 && isset($_GET['resend'])) {
 $signup = $_SESSION['signup'] ?? ['name' => '', 'email' => '', 'dob' => ''];
 $emailMask = $signup['email'] ? preg_replace('/(.).+(@.+)/', '$1***$2', $signup['email']) : '';
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Inscrever-se - <?= SITE_NAME ?></title>
-	<link rel="stylesheet" href="style.css?v=<?= time() ?>">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
-<body>
+<?php renderHeader('Inscrever-se'); ?>
 	<div class="x-auth">
 		<div class="x-auth-wrap">
 			<?php if ($step === 1): ?>
@@ -165,5 +156,4 @@ $emailMask = $signup['email'] ? preg_replace('/(.).+(@.+)/', '$1***$2', $signup[
 			});
 		});
 	</script>
-</body>
-</html>
+<?php renderFooter(); ?>
