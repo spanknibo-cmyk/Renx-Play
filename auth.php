@@ -80,7 +80,7 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 
-                <h2><?= $action === 'register' ? 'Entrar' : 'Entrar' ?></h2>
+                <h2><?= $action === 'register' ? 'Criar conta' : 'Entrar' ?></h2>
                 <p style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; font-size: 0.875rem;">
                     Entre com sua conta para continuar
                 </p>
@@ -92,6 +92,12 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             
             <?= $message ?>
+            
+            <div class="social-login">
+                <a href="#" class="btn btn-social btn-google"><i class="fab fa-google"></i> Continuar com Google</a>
+                <a href="#" class="btn btn-social btn-apple"><i class="fab fa-apple"></i> Continuar com Apple</a>
+            </div>
+            <div class="auth-divider"><span>ou</span></div>
             
             <?php if ($action === 'login'): ?>
                 <form method="POST" class="auth-form">
@@ -108,9 +114,17 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-group">
                         <label for="password">Senha</label>
                         <div style="position: relative;">
-                            <input type="password" id="password" name="password" placeholder="Digite sua senha" required style="padding-left: 2.5rem;">
+                            <input type="password" id="password" name="password" placeholder="Digite sua senha" required style="padding-left: 2.5rem; padding-right: 2.25rem;">
                             <i class="fas fa-lock" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: hsl(var(--muted-foreground)); font-size: 0.875rem;"></i>
+                            <button type="button" class="toggle-password" data-target="#password" aria-label="Mostrar senha" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(var(--muted-foreground)); cursor: pointer;"><i class="far fa-eye"></i></button>
                         </div>
+                    </div>
+                    
+                    <div class="remember-forgot" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <label class="checkbox" style="display: inline-flex; align-items: center; gap: 0.5rem; color: hsl(var(--muted-foreground)); font-size: 0.875rem;">
+                            <input type="checkbox" name="remember" style="accent-color: hsl(var(--primary));"> Lembrar de mim
+                        </label>
+                        <a href="#" class="forgot-link" style="color: hsl(var(--ring)); text-decoration: none; font-size: 0.875rem;">Esqueceu a senha?</a>
                     </div>
                     
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
@@ -139,18 +153,20 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     
                     <div class="form-group">
-                        <label for="password">Senha</label>
+                        <label for="reg_password">Senha</label>
                         <div style="position: relative;">
-                            <input type="password" id="password" name="password" placeholder="Crie uma senha" required style="padding-left: 2.5rem;">
+                            <input type="password" id="reg_password" name="password" placeholder="Crie uma senha" required style="padding-left: 2.5rem; padding-right: 2.25rem;">
                             <i class="fas fa-lock" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: hsl(var(--muted-foreground)); font-size: 0.875rem;"></i>
+                            <button type="button" class="toggle-password" data-target="#reg_password" aria-label="Mostrar senha" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(var(--muted-foreground)); cursor: pointer;"><i class="far fa-eye"></i></button>
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label for="confirm_password">Confirmar Senha</label>
                         <div style="position: relative;">
-                            <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirme sua senha" required style="padding-left: 2.5rem;">
+                            <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirme sua senha" required style="padding-left: 2.5rem; padding-right: 2.25rem;">
                             <i class="fas fa-lock" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: hsl(var(--muted-foreground)); font-size: 0.875rem;"></i>
+                            <button type="button" class="toggle-password" data-target="#confirm_password" aria-label="Mostrar senha" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(var(--muted-foreground)); cursor: pointer;"><i class="far fa-eye"></i></button>
                         </div>
                     </div>
                     
@@ -177,6 +193,19 @@ if ($action === 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             if (firstInput) {
                 firstInput.focus();
             }
+
+            // Toggle mostrar/ocultar senha
+            document.querySelectorAll('.toggle-password').forEach(function(btn) {
+                var selector = btn.getAttribute('data-target');
+                var input = document.querySelector(selector);
+                btn.addEventListener('click', function() {
+                    if (!input) return;
+                    var isPwd = input.getAttribute('type') === 'password';
+                    input.setAttribute('type', isPwd ? 'text' : 'password');
+                    var icon = btn.querySelector('i');
+                    if (icon) icon.className = isPwd ? 'far fa-eye-slash' : 'far fa-eye';
+                });
+            });
         });
     </script>
 </body>
