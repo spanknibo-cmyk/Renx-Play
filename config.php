@@ -543,7 +543,7 @@ function renderHeader($title = '', $description = '', $keywords = '') {
                 </div>
             </div>";
     } else {
-        echo "<a href='auth.php' class='" . ($currentPage === 'auth.php' ? 'nav-link active' : 'nav-link') . "'>
+        echo "<a href='login.php' class='" . ($currentPage === 'login.php' ? 'nav-link active' : 'nav-link') . "'>
                 <i class='fas fa-sign-in-alt'></i>
                 Entrar
             </a>";
