@@ -427,7 +427,7 @@ function uploadMultipleFiles($filesArray, $dir = 'uploads/screenshots/', $maxFil
         $filename = uploadFile($file, $dir, true);
         if ($filename) {
             $uploaded[] = $filename;
-            error_log("✅ Screenshot $i uploaded: $filename");
+            error_log("✅ Captura de tela $i enviada: $filename");
         }
     }
     
@@ -651,14 +651,14 @@ function displayScreenshots($screenshots, $gameTitle = '', $gameId = '', $showTi
     
     $html = "<div class='screenshots'>";
     if ($showTitle) {
-        $html .= "<h3><i class='fas fa-images'></i> Screenshots <span class='count'>(" . count($screenshots) . ")</span></h3>";
+        $html .= "<h3><i class='fas fa-images'></i> Capturas de tela <span class='count'>(" . count($screenshots) . ")</span></h3>";
     }
     $html .= "<div class='screenshot-gallery' data-game-id='{$gameId}'>";
     
     foreach ($screenshots as $index => $screenshot) {
         $imagePath = "uploads/screenshots/" . $screenshot;
         $thumbnailPath = "uploads/screenshots/thumb_" . $screenshot;
-        $alt = $gameTitle ? "$gameTitle - Screenshot " . ($index + 1) : "Screenshot " . ($index + 1);
+        $alt = $gameTitle ? "$gameTitle - Captura de tela " . ($index + 1) : "Captura de tela " . ($index + 1);
 
         // Usar thumbnail se existir
         $displayPath = file_exists($thumbnailPath) ? $thumbnailPath : $imagePath;
@@ -714,7 +714,7 @@ function displayDownloadLinks($downloadLinks, $requiresLogin = true) {
             
             // Detectar tipo de link e definir ícone/cor
             $icon = 'fas fa-download';
-            $service = 'Download';
+            $service = 'Baixar';
             $btnClass = 'btn-download';
             
             if (strpos($link, 'mega.nz') !== false || strpos($link, 'mega.co.nz') !== false) {

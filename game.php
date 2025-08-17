@@ -124,7 +124,7 @@ renderHeader($game['title']);
                     <?php if ($langs): ?>
                         <?= htmlspecialchars(implode(', ', $langs)) ?>
                     <?php else: ?>
-                        <?= htmlspecialchars($game['language'] ?? 'English') ?>
+                        <?= htmlspecialchars($game['language'] ?? 'Inglês') ?>
                     <?php endif; ?>
                 </p>
                 <?php if (!empty($game['developer_name'])): ?>
@@ -178,7 +178,7 @@ renderHeader($game['title']);
                 <?php if (!empty($game['download_url'])): ?>
                     <a href="<?= htmlspecialchars($game['download_url']) ?>" target="_blank" class="btn btn-secondary">
                         <i class="fas fa-download"></i>
-                        Download Geral
+                        Baixar Geral
                     </a>
                 <?php endif; ?>
             </div>
@@ -206,7 +206,7 @@ renderHeader($game['title']);
             <div class="card-content">
                 <h3 style="margin-bottom: 0.75rem;">
                     <i class="fas fa-tags"></i>
-                    Tags
+                    Etiquetas
                 </h3>
                 <div class="card-tags">
                     <?php 
