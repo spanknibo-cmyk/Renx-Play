@@ -1060,3 +1060,76 @@ body {
 .profile-card .form-group textarea,
 .profile-card .form-group select { font-size: 1rem; padding: 1rem; }
 .profile-card .btn { font-size: 1rem; padding: 0.75rem 1rem; }
+
+/* X-like auth flow */
+.x-auth {
+	min-height: 100vh;
+	display: grid;
+	place-items: center;
+	padding: 2rem;
+	background: hsl(var(--background));
+}
+
+.x-auth-wrap {
+	width: 100%;
+	max-width: 480px;
+	background: hsl(var(--card));
+	border: 1px solid hsl(var(--border));
+	border-radius: 24px;
+	padding: 2rem 1.5rem;
+	box-shadow: 0 12px 32px hsl(var(--foreground) / 0.12);
+}
+
+.x-title {
+	font-size: 1.75rem;
+	font-weight: 800;
+	margin-bottom: 1rem;
+}
+
+.x-sub { color: hsl(var(--muted-foreground)); margin-bottom: 1rem; }
+
+.x-form { display: grid; gap: 0.75rem; }
+.x-label { font-size: 0.9rem; color: hsl(var(--muted-foreground)); }
+
+.x-input-wrap { position: relative; }
+.x-input {
+	width: 100%;
+	border: 1px solid hsl(var(--border));
+	border-radius: 999px;
+	padding: 0.9rem 1.1rem;
+	background: hsl(var(--background));
+	color: hsl(var(--foreground));
+	font-size: 1rem;
+}
+.x-input:focus { outline: none; box-shadow: 0 0 0 3px hsl(var(--ring) / 0.2); border-color: hsl(var(--ring)); }
+
+.x-input-wrap .toggle-password {
+	position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+	background: none; border: none; color: hsl(var(--muted-foreground)); cursor: pointer;
+}
+
+.x-cta {
+	margin-top: 0.25rem;
+	background: hsl(var(--primary));
+	color: hsl(var(--primary-foreground));
+	border: 1px solid hsl(var(--primary));
+	border-radius: 999px;
+	padding: 0.9rem 1.1rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+.x-cta:hover { background: hsl(var(--primary) / 0.9); }
+
+.x-link { color: hsl(var(--ring)); text-decoration: none; }
+.x-foot-note { margin-top: 1rem; text-align: center; }
+.x-foot-row { display: flex; justify-content: space-between; margin-top: 0.75rem; }
+
+.x-social { display: grid; gap: 0.5rem; margin-bottom: 0.75rem; }
+
+.x-check { display: flex; gap: 0.75rem; align-items: flex-start; }
+.x-check input { margin-top: 0.3rem; accent-color: hsl(var(--primary)); }
+.x-check span { color: hsl(var(--foreground)); }
+
+@media (max-width: 480px) {
+	.x-auth-wrap { border-radius: 0; max-width: 100%; height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+}
