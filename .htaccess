@@ -1,8 +1,9 @@
 # Security and performance
-Options -Indexes
+Options -Indexes -ExecCGI -Includes -MultiViews
 FileETag None
 <IfModule mod_headers.c>
 	Header unset ETag
+	Header unset X-Powered-By
 	Header set X-Content-Type-Options "nosniff"
 	Header set X-Frame-Options "DENY"
 	Header set X-XSS-Protection "1; mode=block"
@@ -27,3 +28,77 @@ AddType image/svg+xml .svg
 <IfModule mod_deflate.c>
 	AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json image/svg+xml
 </IfModule>
+
+# --- Harden: Block traversal and null bytes in query ---
+<IfModule mod_rewrite.c>
+	RewriteCond %{QUERY_STRING} (\.|%2e){2}/ [NC,OR]
+	RewriteCond %{QUERY_STRING} (\x00|%00) [NC]
+	RewriteRule .* - [F]
+</IfModule>
+# --- Harden: Force HTTPS (considers proxy) ---
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteCond %{HTTPS} !=on [OR]
+	RewriteCond %{HTTP:X-Forwarded-Proto} !https
+	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# --- Harden: Restrict dangerous HTTP methods ---
+<IfModule mod_authz_core.c>
+	<LimitExcept GET POST HEAD OPTIONS>
+		Require all denied
+	</LimitExcept>
+</IfModule>
+<IfModule mod_rewrite.c>
+	RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DELETE|PUT|CONNECT)$ [NC]
+	RewriteRule .* - [F]
+</IfModule>
+
+# --- Harden: Deny access to hidden files and sensitive resources ---
+<FilesMatch "^\.">
+	Require all denied
+</FilesMatch>
+<Files "config.php">
+	Require all denied
+</Files>
+<FilesMatch "(?i)^(composer\.(json|lock)|package\.json|yarn\.lock|phpunit\.xml|\.env(\..*)?|Dockerfile|docker-compose\.yml|Makefile|README\.md|LICENSE|.*\.(sql|ini|log|bak|swp|sh))$">
+	Require all denied
+</FilesMatch>
+<FilesMatch "(?i)_partial\.php$">
+	Require all denied
+</FilesMatch>
+# Block VCS directories
+<IfModule mod_rewrite.c>
+	RewriteRule (?i)\.(git|svn|hg|bzr)(/|$) - [R=404,L]
+</IfModule>
+
+# --- Harden: Prevent PHP execution from uploads via root path (defense in depth) ---
+<IfModule mod_rewrite.c>
+	RewriteRule ^uploads/.*\.(php[0-9]?|phtml|phar)$ - [F,L]
+</IfModule>
+
+# --- Harden: Secure headers ---
+<IfModule mod_headers.c>
+	Header always set Referrer-Policy "strict-origin-when-cross-origin"
+	Header always set Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()"
+	Header always set Cross-Origin-Resource-Policy "same-origin"
+	Header always set Cross-Origin-Opener-Policy "same-origin"
+	Header always set X-Permitted-Cross-Domain-Policies "none"
+	Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" env=HTTPS
+	Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+</IfModule>
+
+# --- Harden: PHP runtime flags when using mod_php ---
+<IfModule mod_php.c>
+	php_flag display_errors Off
+	php_flag log_errors On
+	php_value error_reporting 30711
+	php_value session.cookie_httponly 1
+	php_value session.cookie_secure 1
+	php_value session.use_strict_mode 1
+	php_value session.use_only_cookies 1
+	php_value session.cookie_samesite Lax
+</IfModule>
+
+# --- Harden: Misc ---
+ServerSignature Off
