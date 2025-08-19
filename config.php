@@ -1,4 +1,8 @@
 <?php
+// Habilita buffer de saída para evitar "headers already sent" em erros de startup
+if (!headers_sent()) { @ini_set('output_buffering', '4096'); }
+if (function_exists('ob_start')) { @ob_start(); }
+
 session_start();
 
 date_default_timezone_set('America/Sao_Paulo'); // ou outro fuso que desejar
@@ -20,10 +24,12 @@ define('MAX_SCREENSHOTS', 30);
 define('MIN_PASSWORD_LENGTH', 6);
 
 
-// Headers de segurança
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-header('X-XSS-Protection: 1; mode=block');
+// Headers de segurança (apenas se ainda não enviados)
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('X-XSS-Protection: 1; mode=block');
+}
 
 // Conexão PDO com pool de conexões
 try {
@@ -46,23 +52,51 @@ try {
     die("Erro na conexão com o banco de dados.");
 }
 
-// Cria colunas novas se não existirem (migração leve)
+// Cria colunas novas se não existirem (migração leve, segura para produção)
 function ensureGameColumns(PDO $pdo): void {
     try {
         $columns = $pdo->query("SHOW COLUMNS FROM games")->fetchAll(PDO::FETCH_COLUMN);
         $need = [
+            // Metadados gerais
+            'category' => "ALTER TABLE games ADD COLUMN category VARCHAR(100) NULL AFTER cover_image",
+            'language' => "ALTER TABLE games ADD COLUMN language VARCHAR(50) NULL AFTER category",
+            'version' => "ALTER TABLE games ADD COLUMN version VARCHAR(50) NULL AFTER language",
+            'engine' => "ALTER TABLE games ADD COLUMN engine VARCHAR(100) NULL AFTER version",
+            'tags' => "ALTER TABLE games ADD COLUMN tags TEXT NULL AFTER engine",
+
+            // Plataformas e flags
+            'download_url' => "ALTER TABLE games ADD COLUMN download_url TEXT NULL AFTER tags",
+            'download_url_windows' => "ALTER TABLE games ADD COLUMN download_url_windows TEXT NULL AFTER download_url",
+            'download_url_android' => "ALTER TABLE games ADD COLUMN download_url_android TEXT NULL AFTER download_url_windows",
+            'download_url_linux' => "ALTER TABLE games ADD COLUMN download_url_linux TEXT NULL AFTER download_url_android",
+            'download_url_mac' => "ALTER TABLE games ADD COLUMN download_url_mac TEXT NULL AFTER download_url_linux",
+            'censored' => "ALTER TABLE games ADD COLUMN censored TINYINT(1) NOT NULL DEFAULT 0 AFTER download_url_mac",
+            'os_windows' => "ALTER TABLE games ADD COLUMN os_windows TINYINT(1) NOT NULL DEFAULT 0 AFTER censored",
+            'os_android' => "ALTER TABLE games ADD COLUMN os_android TINYINT(1) NOT NULL DEFAULT 0 AFTER os_windows",
+            'os_linux' => "ALTER TABLE games ADD COLUMN os_linux TINYINT(1) NOT NULL DEFAULT 0 AFTER os_android",
+            'os_mac' => "ALTER TABLE games ADD COLUMN os_mac TINYINT(1) NOT NULL DEFAULT 0 AFTER os_linux",
+
+            // Relacionamento com autor
+            'posted_by' => "ALTER TABLE games ADD COLUMN posted_by BIGINT UNSIGNED NOT NULL AFTER os_mac",
+
+            // Campos expandidos
             'developer_name' => "ALTER TABLE games ADD COLUMN developer_name VARCHAR(255) NULL AFTER posted_by",
-            'languages_multi' => "ALTER TABLE games ADD COLUMN languages_multi TEXT NULL AFTER developer_name",
+            'languages_multi' => "ALTER TABLE games ADD COLUMN languages_multi JSON NULL AFTER developer_name",
             'updated_at_custom' => "ALTER TABLE games ADD COLUMN updated_at_custom DATE NULL AFTER languages_multi",
             'released_at_custom' => "ALTER TABLE games ADD COLUMN released_at_custom DATE NULL AFTER updated_at_custom",
-            'patreon_url' => "ALTER TABLE games ADD COLUMN patreon_url VARCHAR(255) NULL AFTER released_at_custom",
-            'discord_url' => "ALTER TABLE games ADD COLUMN discord_url VARCHAR(255) NULL AFTER patreon_url",
-            'subscribestar_url' => "ALTER TABLE games ADD COLUMN subscribestar_url VARCHAR(255) NULL AFTER discord_url",
-            'itch_url' => "ALTER TABLE games ADD COLUMN itch_url VARCHAR(255) NULL AFTER subscribestar_url",
-            'kofi_url' => "ALTER TABLE games ADD COLUMN kofi_url VARCHAR(255) NULL AFTER itch_url",
-            'bmc_url' => "ALTER TABLE games ADD COLUMN bmc_url VARCHAR(255) NULL AFTER kofi_url",
-            'steam_url' => "ALTER TABLE games ADD COLUMN steam_url VARCHAR(255) NULL AFTER bmc_url",
-            'screenshots' => "ALTER TABLE games ADD COLUMN screenshots TEXT NULL AFTER steam_url"
+            'patreon_url' => "ALTER TABLE games ADD COLUMN patreon_url TEXT NULL AFTER released_at_custom",
+            'discord_url' => "ALTER TABLE games ADD COLUMN discord_url TEXT NULL AFTER patreon_url",
+            'subscribestar_url' => "ALTER TABLE games ADD COLUMN subscribestar_url TEXT NULL AFTER discord_url",
+            'itch_url' => "ALTER TABLE games ADD COLUMN itch_url TEXT NULL AFTER subscribestar_url",
+            'kofi_url' => "ALTER TABLE games ADD COLUMN kofi_url TEXT NULL AFTER itch_url",
+            'bmc_url' => "ALTER TABLE games ADD COLUMN bmc_url TEXT NULL AFTER kofi_url",
+            'steam_url' => "ALTER TABLE games ADD COLUMN steam_url TEXT NULL AFTER bmc_url",
+            'screenshots' => "ALTER TABLE games ADD COLUMN screenshots JSON NULL AFTER steam_url",
+
+            // Métricas e datas
+            'downloads_count' => "ALTER TABLE games ADD COLUMN downloads_count INT UNSIGNED NOT NULL DEFAULT 0 AFTER screenshots",
+            'created_at' => "ALTER TABLE games ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER downloads_count",
+            'updated_at' => "ALTER TABLE games ADD COLUMN updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP AFTER created_at"
         ];
         foreach ($need as $col => $ddl) {
             if (!in_array($col, $columns, true)) {
@@ -777,8 +811,9 @@ function displayDownloadLinks($downloadLinks, $requiresLogin = true) {
 function getTotalGames() {
     global $pdo;
     try {
-        $stmt = $pdo->query("SELECT COUNT(*) FROM games WHERE status = 'published'");
-        return $stmt->fetchColumn() ?: 0;
+        // Sem coluna status; considera todos os registros
+        $stmt = $pdo->query("SELECT COUNT(*) FROM games");
+        return (int)($stmt->fetchColumn() ?: 0);
     } catch (PDOException $e) {
         error_log("Erro ao buscar total de jogos: " . $e->getMessage());
         return 0;
@@ -788,8 +823,9 @@ function getTotalGames() {
 function getTotalUsers() {
     global $pdo;
     try {
-        $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE status = 'active'");
-        return $stmt->fetchColumn() ?: 0;
+        // Sem coluna status; considera todos os registros
+        $stmt = $pdo->query("SELECT COUNT(*) FROM users");
+        return (int)($stmt->fetchColumn() ?: 0);
     } catch (PDOException $e) {
         error_log("Erro ao buscar total de usuários: " . $e->getMessage());
         return 0;

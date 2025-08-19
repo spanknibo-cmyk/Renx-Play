@@ -76,8 +76,11 @@ if (isLoggedIn() && isset($_POST['action'])) {
 }
 
 if (isset($_GET['download']) && isLoggedIn()) {
-    $pdo->prepare("UPDATE games SET downloads_count = downloads_count + 1 WHERE id = ?")
-        ->execute([ $_GET['download'] ]);
+    $downloadId = (int)$_GET['download'];
+    if ($downloadId > 0) {
+        $pdo->prepare("UPDATE games SET downloads_count = downloads_count + 1 WHERE id = ?")
+            ->execute([ $downloadId ]);
+    }
     echo "<script>window.close();</script>";
     exit;
 }

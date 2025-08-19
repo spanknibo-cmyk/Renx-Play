@@ -17,6 +17,7 @@ FileETag None
 	php_value max_file_uploads 60
 	php_value max_input_time 300
 	php_value max_execution_time 300
+	php_value output_buffering 4096
 </IfModule>
 
 # Allow serving modern image types
