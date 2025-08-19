@@ -135,6 +135,16 @@ ALTER TABLE `games`
   ADD COLUMN IF NOT EXISTS `status` ENUM('draft','published','archived') NOT NULL DEFAULT 'published' AFTER `downloads_count`,
   ADD COLUMN IF NOT EXISTS `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `status`;
 
+-- Garanta que a coluna ENGINE tenha exatamente o ENUM esperado, mesmo se já existir
+SET @engine_col_exists := (
+  SELECT COUNT(*) FROM information_schema.columns
+  WHERE table_schema = DATABASE() AND table_name = 'games' AND column_name = 'engine'
+);
+SET @sql := IF(@engine_col_exists = 1,
+  'ALTER TABLE `games` MODIFY COLUMN `engine` ENUM(''REN''''PY'',''UNITY'',''RPG_MAKER'',''OTHER'') NOT NULL DEFAULT ''REN''''PY'';',
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Unicidade e índices
 SET @exists := (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'games' AND index_name = 'ux_games_slug');
 SET @sql := IF(@exists = 0, 'CREATE UNIQUE INDEX `ux_games_slug` ON `games`(`slug`);', 'SELECT 1');
