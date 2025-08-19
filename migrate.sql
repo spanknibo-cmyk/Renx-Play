@@ -112,15 +112,15 @@ CALL add_column_if_missing('games','engine',
 CALL add_column_if_missing('games','tags',
   'ALTER TABLE `games` ADD COLUMN `tags` TEXT NULL AFTER `engine`');
 CALL add_column_if_missing('games','download_url',
-  'ALTER TABLE `games` ADD COLUMN `download_url` VARCHAR(2048) NULL AFTER `tags`');
+  'ALTER TABLE `games` ADD COLUMN `download_url` TEXT NULL AFTER `tags`');
 CALL add_column_if_missing('games','download_url_windows',
-  'ALTER TABLE `games` ADD COLUMN `download_url_windows` VARCHAR(2048) NULL AFTER `download_url`');
+  'ALTER TABLE `games` ADD COLUMN `download_url_windows` TEXT NULL AFTER `download_url`');
 CALL add_column_if_missing('games','download_url_android',
-  'ALTER TABLE `games` ADD COLUMN `download_url_android` VARCHAR(2048) NULL AFTER `download_url_windows`');
+  'ALTER TABLE `games` ADD COLUMN `download_url_android` TEXT NULL AFTER `download_url_windows`');
 CALL add_column_if_missing('games','download_url_linux',
-  'ALTER TABLE `games` ADD COLUMN `download_url_linux` VARCHAR(2048) NULL AFTER `download_url_android`');
+  'ALTER TABLE `games` ADD COLUMN `download_url_linux` TEXT NULL AFTER `download_url_android`');
 CALL add_column_if_missing('games','download_url_mac',
-  'ALTER TABLE `games` ADD COLUMN `download_url_mac` VARCHAR(2048) NULL AFTER `download_url_linux`');
+  'ALTER TABLE `games` ADD COLUMN `download_url_mac` TEXT NULL AFTER `download_url_linux`');
 CALL add_column_if_missing('games','censored',
   'ALTER TABLE `games` ADD COLUMN `censored` TINYINT(1) NOT NULL DEFAULT 0 AFTER `download_url_mac`');
 CALL add_column_if_missing('games','os_windows',
@@ -142,19 +142,19 @@ CALL add_column_if_missing('games','updated_at_custom',
 CALL add_column_if_missing('games','released_at_custom',
   'ALTER TABLE `games` ADD COLUMN `released_at_custom` DATE NULL AFTER `updated_at_custom`');
 CALL add_column_if_missing('games','patreon_url',
-  'ALTER TABLE `games` ADD COLUMN `patreon_url` VARCHAR(2048) NULL AFTER `released_at_custom`');
+  'ALTER TABLE `games` ADD COLUMN `patreon_url` TEXT NULL AFTER `released_at_custom`');
 CALL add_column_if_missing('games','discord_url',
-  'ALTER TABLE `games` ADD COLUMN `discord_url` VARCHAR(2048) NULL AFTER `patreon_url`');
+  'ALTER TABLE `games` ADD COLUMN `discord_url` TEXT NULL AFTER `patreon_url`');
 CALL add_column_if_missing('games','subscribestar_url',
-  'ALTER TABLE `games` ADD COLUMN `subscribestar_url` VARCHAR(2048) NULL AFTER `discord_url`');
+  'ALTER TABLE `games` ADD COLUMN `subscribestar_url` TEXT NULL AFTER `discord_url`');
 CALL add_column_if_missing('games','itch_url',
-  'ALTER TABLE `games` ADD COLUMN `itch_url` VARCHAR(2048) NULL AFTER `subscribestar_url`');
+  'ALTER TABLE `games` ADD COLUMN `itch_url` TEXT NULL AFTER `subscribestar_url`');
 CALL add_column_if_missing('games','kofi_url',
-  'ALTER TABLE `games` ADD COLUMN `kofi_url` VARCHAR(2048) NULL AFTER `itch_url`');
+  'ALTER TABLE `games` ADD COLUMN `kofi_url` TEXT NULL AFTER `itch_url`');
 CALL add_column_if_missing('games','bmc_url',
-  'ALTER TABLE `games` ADD COLUMN `bmc_url` VARCHAR(2048) NULL AFTER `kofi_url`');
+  'ALTER TABLE `games` ADD COLUMN `bmc_url` TEXT NULL AFTER `kofi_url`');
 CALL add_column_if_missing('games','steam_url',
-  'ALTER TABLE `games` ADD COLUMN `steam_url` VARCHAR(2048) NULL AFTER `bmc_url`');
+  'ALTER TABLE `games` ADD COLUMN `steam_url` TEXT NULL AFTER `bmc_url`');
 CALL add_column_if_missing('games','screenshots',
   'ALTER TABLE `games` ADD COLUMN `screenshots` JSON NULL AFTER `steam_url`');
 CALL add_column_if_missing('games','downloads_count',
@@ -291,7 +291,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
   KEY `idx_comments_user_id` (`user_id`),
   KEY `idx_comments_parent_id` (`parent_id`),
   KEY `idx_comments_created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- FKs de comments
 SET @have_fk_comments_game := (

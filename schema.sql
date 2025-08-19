@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   CONSTRAINT `fk_users_created_by_users`
     FOREIGN KEY (`created_by`) REFERENCES `users`(`id`)
     ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
 -- Tabela: games
@@ -49,11 +49,11 @@ CREATE TABLE IF NOT EXISTS `games` (
   `version` VARCHAR(50) NULL,
   `engine` VARCHAR(100) NULL,
   `tags` TEXT NULL,
-  `download_url` VARCHAR(2048) NULL,
-  `download_url_windows` VARCHAR(2048) NULL,
-  `download_url_android` VARCHAR(2048) NULL,
-  `download_url_linux` VARCHAR(2048) NULL,
-  `download_url_mac` VARCHAR(2048) NULL,
+  `download_url` TEXT NULL,
+  `download_url_windows` TEXT NULL,
+  `download_url_android` TEXT NULL,
+  `download_url_linux` TEXT NULL,
+  `download_url_mac` TEXT NULL,
   `censored` TINYINT(1) NOT NULL DEFAULT 0,
   `os_windows` TINYINT(1) NOT NULL DEFAULT 0,
   `os_android` TINYINT(1) NOT NULL DEFAULT 0,
@@ -64,13 +64,13 @@ CREATE TABLE IF NOT EXISTS `games` (
   `languages_multi` JSON NULL,
   `updated_at_custom` DATE NULL,
   `released_at_custom` DATE NULL,
-  `patreon_url` VARCHAR(2048) NULL,
-  `discord_url` VARCHAR(2048) NULL,
-  `subscribestar_url` VARCHAR(2048) NULL,
-  `itch_url` VARCHAR(2048) NULL,
-  `kofi_url` VARCHAR(2048) NULL,
-  `bmc_url` VARCHAR(2048) NULL,
-  `steam_url` VARCHAR(2048) NULL,
+  `patreon_url` TEXT NULL,
+  `discord_url` TEXT NULL,
+  `subscribestar_url` TEXT NULL,
+  `itch_url` TEXT NULL,
+  `kofi_url` TEXT NULL,
+  `bmc_url` TEXT NULL,
+  `steam_url` TEXT NULL,
   `screenshots` JSON NULL,
   `downloads_count` INT UNSIGNED NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS `games` (
   CONSTRAINT `fk_games_posted_by_users`
     FOREIGN KEY (`posted_by`) REFERENCES `users`(`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
 -- Tabela: comments
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
   CONSTRAINT `fk_comments_parent_id_comments`
     FOREIGN KEY (`parent_id`) REFERENCES `comments`(`id`)
     ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
 -- Observações
