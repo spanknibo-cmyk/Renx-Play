@@ -1,4 +1,8 @@
 <?php
+// Habilita buffer de saída para evitar "headers already sent" em erros de startup
+if (!headers_sent()) { @ini_set('output_buffering', '4096'); }
+if (function_exists('ob_start')) { @ob_start(); }
+
 session_start();
 
 date_default_timezone_set('America/Sao_Paulo'); // ou outro fuso que desejar
@@ -20,10 +24,12 @@ define('MAX_SCREENSHOTS', 30);
 define('MIN_PASSWORD_LENGTH', 6);
 
 
-// Headers de segurança
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-header('X-XSS-Protection: 1; mode=block');
+// Headers de segurança (apenas se ainda não enviados)
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('X-XSS-Protection: 1; mode=block');
+}
 
 // Conexão PDO com pool de conexões
 try {
