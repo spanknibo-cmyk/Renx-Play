@@ -21,7 +21,15 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch();
     
     if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user'] = $user;
+        // Armazena apenas dados essenciais, nunca o hash da senha
+        $_SESSION['user'] = [
+            'id' => $user['id'],
+            'username' => $user['username'],
+            'email' => $user['email'],
+            'role' => $user['role'],
+            'created_by' => $user['created_by'] ?? null,
+            'created_at' => $user['created_at'] ?? null,
+        ];
         header('Location: ' . ($_GET['redirect'] ?? 'index.php'));
         exit;
     } else {
